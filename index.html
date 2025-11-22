@@ -84,13 +84,11 @@
     </div>
     
     <!-- Recipe Grid -->
-    <!-- ИЗМЕНЕНИЕ: Установка grid-cols-2 по умолчанию (для мобильных) и уменьшение отступа gap-4 -->
     <div id="cardGrid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
         <!-- Cards will be injected here -->
     </div>
     
     <!-- Modal for Detailed View (using <dialog> element) -->
-    <!-- ИЗМЕНЕНИЕ: Уменьшение ширины для лучшей адаптивности на мобильных и ноутах -->
     <dialog id="recipeModal" class="p-0 rounded-2xl metal-effect w-11/12 max-w-2xl lg:max-w-3xl mx-auto overflow-hidden">
         <div class="p-6 sm:p-8 bg-white/20 max-h-[90vh] overflow-y-auto"> <!-- Фон внутри модального окна --><div class="flex justify-between items-start mb-6">
                 <!-- Название в модальном окне - темный текст с белой тенью --><h2 id="modalName" class="text-3xl font-extrabold text-gray-700 drop-shadow-md" style="text-shadow: 0 0 5px #FFFFFF;"></h2>
@@ -112,14 +110,18 @@
                 </div>
                 
                 <!-- Ingredients & Recipe (Правая колонка на десктопе) --><div class="lg:w-2/3 space-y-6">
-                    <!-- Ingredients --><div class="p-4 metal-effect">
+                    <!-- Ingredients -->
+                    <div class="p-4 metal-effect">
                         <!-- Разделитель на нейтральный --><h3 class="text-xl font-semibold text-gray-700 mb-3 border-b pb-2 border-gray-300/50">Ингредиенты:</h3>
-                        <ul id="modalIngredientsList" class="list-disc list-inside space-y-2 text-gray-700 pl-4"></ul>
+                        <!-- Используем <ul> (list-none) для сохранения ручной нумерации -->
+                        <ul id="modalIngredientsList" class="space-y-2 text-gray-700 pl-4 list-none"></ul>
                     </div>
                     
-                    <!-- Recipe --><div class="p-4 metal-effect">
+                    <!-- Recipe -->
+                    <div class="p-4 metal-effect">
                         <!-- Разделитель на нейтральный --><h3 class="text-xl font-semibold text-gray-700 mb-3 border-b pb-2 border-gray-300/50">Технология Приготовления:</h3>
-                        <ol id="modalStepsList" class="space-y-3 text-gray-700 pl-4"></ol>
+                        <!-- ИЗМЕНЕНИЕ: Используем <ul> (list-none) для сохранения ручной нумерации -->
+                        <ul id="modalStepsList" class="space-y-3 text-gray-700 pl-4 list-none"></ul>
                     </div>
                 </div>
             </div>
@@ -141,40 +143,72 @@
         const recipeModal = document.getElementById('recipeModal');
 
         // --- ВРЕМЕННЫЕ ДАННЫЕ ДЛЯ ДЕМОНСТРАЦИИ (FALLBACK) ---
-        // Эти данные будут использоваться только в случае ошибки загрузки с CSV_URL
         const sampleData = [
             {
-                'название': 'Латте Ванильный',
-                'объём': '300',
-                'состав': 'Эспрессо - 60 мл\nМолоко 3.2% - 200 мл\nСироп Ванильный - 20 мл',
-                'рецепт': '1. Влейте сироп в чашку.\n2. Взбейте молоко до нежной пены.\n3. Влейте молоко в чашку.\n4. Аккуратно влейте эспрессо через край.',
-                'фото': 'https://placehold.co/400x600/FFFFFF/666666?text=Латте+(Демо)' 
+                'название': 'Напиток Кактус-Жасмин',
+                'объём': '350',
+                'состав': '1. ПФ Кактус-Каламанси - 100мл\n2. ПФ Чай Жасмин - 0,50мл\n3. т. Газ Вода - 0,50мл\nЛёд', // Пример ручной нумерации + позиция без номера
+                'рецепт': '1. Смешайте все компоненты, кроме льда.\n2. Перелейте в бокал, наполненный льдом.\n3. Вставьте трубочку.', // Пример ручной нумерации
+                'фото': 'https://placehold.co/400x600/FFFFFF/666666?text=Напиток+(Демо)' 
             },
             {
                 'название': 'Флэт Уайт',
                 'объём': '180',
-                'состав': 'Двойной Ристретто - 40 мл\nМолоко 3.2% - 140 мл',
-                'рецепт': '1. Приготовьте двойной ристретто.\n2. Взбейте молоко до гладкой, шелковистой текстуры (без пышной пены).\n3. Влейте молоко, рисуя простой узор.',
+                'состав': '1. Двойной Ристретто - 40 мл;2. Молоко 3.2% - 140 мл', // Пример с точкой с запятой
+                'рецепт': '1. Приготовьте двойной ристретто;2. Взбейте молоко;3. Влейте молоко.', // Пример с точкой с запятой
                 'фото': 'https://placehold.co/400x300/FFFFFF/666666?text=Флэт+Уайт+(Демо)' 
             },
             {
                 'название': 'Чай Облепиховый',
                 'объём': '400',
-                'состав': 'Пюре облепиховое - 60 гр\nМед - 20 гр\nКипяток - 320 мл\nЛимон - 1 долька',
-                'рецепт': '1. Положите пюре и мед в заварочный чайник.\n2. Залейте кипятком.\n3. Перемешайте и дайте настояться 5 минут.\n4. Подавайте с долькой лимона.',
+                'состав': '1. Пюре облепиховое - 60 гр\n2. Мед - 20 гр\n3. Кипяток - 320 мл\n4. Лимон - 1 долька',
+                'рецепт': '1. Положите пюре и мед.\n2. Залейте кипятком.\n3. Настаивайте 5 минут.\n4. Подавайте с лимоном.',
                 'фото': 'https://placehold.co/400x800/FFFFFF/666666?text=Чай+(Демо)' 
             }
         ];
         // -------------------------------------------------------------------
 
+        // --- НОВЫЙ Более надежный парсер CSV-строки с учетом кавычек ---
+        function splitCsvLine(line, delimiter) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            // Итерируем по символам, чтобы корректно учесть кавычки
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    // Если это экранированная кавычка внутри поля ("" -> ")
+                    if (i > 0 && line[i-1] === '"' && inQuotes) {
+                         // Пропускаем, так как она будет обработана ниже
+                    }
+                    inQuotes = !inQuotes;
+                } else if (char === delimiter && !inQuotes) {
+                    // Найден разделитель ВНЕ кавычек
+                    result.push(current);
+                    current = '';
+                    continue; 
+                }
+                current += char;
+            }
+            // Добавляем последнее поле
+            result.push(current);
+            
+            // Постобработка: очистка от внешних кавычек и экранированных кавычек
+            return result.map(field => {
+                let cleanField = field.trim().replace(/\r/g, ''); // Удаляем возврат каретки
 
-        // --- DEBUG FUNCTION ---
-        function showRawData() {
-            // Эта функция будет пустой, так как секция DEBUG удалена
-            console.log("DEBUG секция удалена в минималистичном дизайне.");
+                // Удаляем внешние кавычки, если они есть
+                if (cleanField.startsWith('"') && cleanField.endsWith('"')) {
+                    cleanField = cleanField.substring(1, cleanField.length - 1);
+                }
+                
+                // Заменяем две кавычки внутри поля на одну (стандартное CSV-экранирование)
+                return cleanField.replace(/""/g, '"');
+            });
         }
-        // --- END DEBUG FUNCTION ---
-
+        
         // --- CSV Parsing Logic (Detects column delimiter) ---
 
         function csvToObjectArray(csvText) {
@@ -187,32 +221,31 @@
             }
 
             const rawHeaders = lines[0].replace(/^\ufeff/, '').trim();
-            // 2. Определение разделителя (логика оставлена для случая, когда fetch все-таки сработает)
+            // 2. Определение разделителя с учетом запроса пользователя (приоритет ;)
             const commaCount = rawHeaders.split(',').length;
             const semicolonCount = rawHeaders.split(';').length;
             const pipeCount = rawHeaders.split('|').length; 
 
             let columnDelimiter;
             if (semicolonCount > commaCount && semicolonCount >= pipeCount) {
-                columnDelimiter = ';';
+                // ПРИОРИТЕТ: Точка с запятой, как просил пользователь
+                columnDelimiter = ';'; 
+            } else if (commaCount > semicolonCount && commaCount >= pipeCount) {
+                columnDelimiter = ','; // Запятая
             } else if (pipeCount > commaCount && pipeCount > semicolonCount) {
-                columnDelimiter = '|';
+                columnDelimiter = '|'; // Вертикальная черта
             } else {
-                columnDelimiter = ','; 
+                columnDelimiter = ','; // По умолчанию Запятая
             }
             
-            // 3. Создание Regex для разделения колонок
-            const delimiterRegex = new RegExp(`${columnDelimiter}(?=(?:(?:[^"]*"){2})*[^"]*$)`, 'g');
-
-            // 4. Обработка заголовков
-            const headers = rawHeaders.split(delimiterRegex).map(header => {
-                return header.trim().toLowerCase().replace(/"/g, ''); 
-            });
+            // 3. Обработка заголовков (используем новый парсер)
+            const headerValues = splitCsvLine(rawHeaders, columnDelimiter);
+            const headers = headerValues.map(header => header.toLowerCase());
             
             console.log("Определен разделитель колонок:", columnDelimiter); 
             console.log("Обработанные заголовки:", headers); 
             
-            // 4.1 Критическая проверка обязательных заголовков
+            // 4. Критическая проверка обязательных заголовков
             const requiredHeaders = ['название', 'состав', 'рецепт', 'объём', 'фото'];
             const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
             
@@ -232,20 +265,17 @@
 
             // 5. Обработка данных
             for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].trim().split(delimiterRegex);
+                // Используем новый, надежный парсер
+                const values = splitCsvLine(lines[i], columnDelimiter);
                 
                 if (values.length !== headers.length) {
-                    continue;
+                    // Это может быть пустая строка или строка с ошибкой. Пропускаем.
+                    continue; 
                 }
 
                 const obj = {};
                 headers.forEach((header, index) => {
-                    let value = values[index].trim().replace(/\r/g, '');
-                    // Удаляем внешние кавычки
-                    if (value.startsWith('"') && value.endsWith('"')) {
-                        value = value.substring(1, value.length - 1);
-                    }
-                    obj[header] = value;
+                    obj[header] = values[index];
                 });
                 
                 if (obj['название'] && obj['название'].trim() !== '') {
@@ -299,12 +329,15 @@
 
             const ingredientsListEl = document.getElementById('modalIngredientsList');
             ingredientsListEl.innerHTML = '';
-            const ingredients = card['состав'] ? card['состав'].split(/\r?\n/) : [];
+            // Разбиваем ингредиенты по точке с запятой ИЛИ по новой строке.
+            const ingredients = card['состав'] ? card['состав'].split(/[;\r?\n]+/).filter(item => item.trim() !== '') : [];
+            
+            // Ручная нумерация для "СОСТАВА"
             ingredients.forEach(item => {
-                const cleanItem = item.trim().replace(/^\d+\.\s*/, ''); 
+                const cleanItem = item.trim(); 
                 if (cleanItem) {
                     const li = document.createElement('li');
-                    li.textContent = cleanItem;
+                    li.textContent = cleanItem; 
                     li.className = "text-gray-700"; 
                     ingredientsListEl.appendChild(li);
                 }
@@ -312,12 +345,15 @@
 
             const stepsListEl = document.getElementById('modalStepsList');
             stepsListEl.innerHTML = '';
-            const steps = card['рецепт'] ? card['рецепт'].split(/\r?\n/) : [];
+            // Разбиваем шаги по точке с запятой ИЛИ по новой строке.
+            const steps = card['рецепт'] ? card['рецепт'].split(/[;\r?\n]+/).filter(step => step.trim() !== '') : [];
+            
+            // ИЗМЕНЕНИЕ: Ручная нумерация для "РЕЦЕПТА"
             steps.forEach(step => {
-                const cleanStep = step.trim().replace(/^\d+\.\s*/, ''); 
+                const cleanStep = step.trim(); 
                 if (cleanStep) {
                     const li = document.createElement('li');
-                    li.textContent = cleanStep;
+                    li.textContent = cleanStep; // Отображаем текст точно как в CSV
                     li.className = "text-gray-700"; 
                     stepsListEl.appendChild(li);
                 }
@@ -326,7 +362,7 @@
             recipeModal.showModal();
         }
 
-        // --- Search/Filtering Logic (unchanged) ---
+        // --- Search/Filtering Logic (No changes) ---
         function filterDrinks() {
             const query = searchBar.value.toLowerCase().trim();
             if (!query) {
@@ -343,7 +379,7 @@
         }
 
 
-        // --- Core Fetching Logic with Retry (Оставлена, но не используется, если CSV_URL пуст) ---
+        // --- Core Fetching Logic with Retry (No changes to fetch) ---
 
         async function retryFetch(url, retries = 3, delay = 1000) {
             for (let i = 0; i < retries; i++) {
@@ -376,12 +412,18 @@
                     const response = await retryFetch(CSV_URL); 
                     const csvText = await response.text();
                     rawCsvText = csvText; // Сохраняем для отладки
+                    
+                    // ВЫВОД ДЛЯ ОТЛАДКИ: Вывод первых 5 строк в консоль
+                    console.log("--- DEBUG: Первые 5 строк CSV ---");
+                    console.log(rawCsvText.split('\n').slice(0, 5).join('\n'));
+                    console.log("----------------------------------");
+                    
                     drinkData = csvToObjectArray(csvText);
                     fetchSuccess = drinkData.length > 0;
 
                 } catch (error) {
                     console.error("Критическая ошибка загрузки данных из CSV:", error);
-                    // ИЗМЕНЕНИЕ: Добавляем URL в сообщение об ошибке
+                    // Добавляем URL в сообщение об ошибке
                     statusIndicator.innerHTML = `<div class='text-center p-10 metal-effect mt-8'>
                                                  <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">⚠️ Ошибка Загрузки Данных (CORS/Сеть)</p>
                                                  <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Причина: <b>${error.message}</b></p>
