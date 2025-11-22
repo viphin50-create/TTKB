@@ -3,552 +3,424 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ТТК Бара</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght400;700&display=swap" rel="stylesheet">
+    <title>База Рецептов ТТК</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* =======================================
-           СТИЛИ CSS
-           ======================================= */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #ffffff; /* Белый фон */
-            margin: 0;
-            padding: 0;
-            color: #333;
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f9;
         }
-
-        header {
-            background-color: #f8f8f8;
-            color: #333;
-            padding: 20px 0;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        /* Custom modal backdrop for better visual appeal */
+        dialog::backdrop {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
         }
-
-        h1 {
-            margin: 0;
-            font-size: 1.8em;
-            margin-bottom: 10px;
+        /* Loading spinner animation */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #ec4899; /* Pink-500 */
+            animation: spin 1s ease infinite;
         }
-        
-        /* Стили для поля поиска */
-        #search-container {
-            padding: 10px 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        #search-input {
-            width: 100%;
-            padding: 10px 15px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            font-size: 1em;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-            transition: border-color 0.2s;
-        }
-
-        #search-input:focus {
-            outline: none;
-            border-color: #2980b9;
-        }
-
-        #drinks-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 20px;
-            gap: 20px;
-        }
-
-        /* Стиль карточки напитка - служит прозрачной кнопкой */
-        .drink-card {
-            /* Полупрозрачный фон, близкий к требованиям */
-            background: rgba(255, 255, 255, 0.7); 
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-            width: 100%;
-            max-width: 280px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-            overflow: hidden;
-        }
-        
-        /* Адаптивность для мобильных устройств */
-        @media (max-width: 600px) {
-            .drink-card {
-                max-width: 90%; 
-            }
-        }
-
-        .drink-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-            background: rgba(255, 255, 255, 0.9); /* Чуть менее прозрачный при наведении */
-        }
-
-        .drink-card img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .drink-card h2 {
-            font-size: 1.2em;
-            margin: 5px 0 5px 0;
-            color: #333;
-        }
-        
-        .drink-card p {
-            font-size: 0.9em;
-            color: #555;
-            margin: 0;
-        }
-
-        /* Модальное окно */
-        .modal {
-            display: none; 
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.6); 
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto; /* Центрирование сверху */
-            padding: 25px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 700px;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            animation-name: animatetop;
-            animation-duration: 0.4s
-        }
-        
-        @keyframes animatetop {
-            from {top: -300px; opacity: 0}
-            to {top: 5%; opacity: 1}
-        }
-
-        /* Прозрачная кнопка закрытия модального окна */
-        .close-button {
-            color: #aaa;
-            float: right;
-            font-size: 32px;
-            font-weight: bold;
-            background: transparent; 
-            border: none;
-            padding: 0 10px;
-            cursor: pointer;
-            transition: color 0.2s;
-            line-height: 1;
-        }
-
-        .close-button:hover,
-        .close-button:focus {
-            color: #000;
-            text-decoration: none;
-        }
-
-        #modal-body h2 {
-            text-align: center;
-            color: #2980b9;
-            margin-top: 0;
-            margin-bottom: 20px;
-        }
-
-        #modal-body img {
-            display: block;
-            max-width: 100%;
-            max-height: 300px;
-            object-fit: contain;
-            margin: 10px auto 20px auto;
-            border-radius: 8px;
-        }
-
-        /* Новый стиль для блоков состава/рецепта */
-        .detail-block {
-            margin-bottom: 25px;
-            padding: 15px;
-            background-color: #f4f7f9; /* Светло-серый фон */
-            border-left: 4px solid #3498db; /* Яркая синяя полоса */
-            border-radius: 6px;
-        }
-        
-        .detail-block strong {
-            display: block;
-            font-size: 1.1em;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #e1e1e1;
-            padding-bottom: 5px;
-        }
-        
-        .detail-block pre {
-            /* Используем pre-wrap для сохранения переносов строк из JS-форматирования */
-            white-space: pre-wrap;
-            word-break: break-word;
-            font-family: inherit; /* Используем тот же шрифт, что и в body */
-            margin: 0;
-            padding: 0;
-            color: #444;
-        }
-
-        #loading-message, #error-message, #no-results {
-            width: 100%;
-            text-align: center;
-            font-size: 1.2em;
-            padding: 50px;
-            color: #999;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body>
-    <header>
-        <h1>Технологические Карты Бара</h1>
-        <div id="search-container">
-            <input type="text" id="search-input" placeholder="Введите название, ингредиент или слово из рецепта..." aria-label="Поиск напитков">
-        </div>
+<body class="p-4 sm:p-8">
+
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-800">☕️ База Рецептов ТТК Напитков</h1>
+        <p class="text-gray-600 mt-2">База данных для быстрого поиска и просмотра технологии приготовления.</p>
     </header>
 
-    <main id="drinks-container">
-        <!-- Сообщение о загрузке или ошибке -->
-        <p id="loading-message">Загрузка данных...</p>
-    </main>
-
-    <!-- Модальное окно для отображения деталей -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" role="button" aria-label="Закрыть">&times;</span>
-            <div id="modal-body">
-                <!-- Детали напитка будут вставлены сюда -->
-            </div>
-        </div>
+    <!-- Search Input -->
+    <div class="flex justify-center mb-8">
+        <input type="text" id="searchBar" placeholder="🔍 Начните вводить название напитка для поиска..." 
+               class="w-full max-w-xl p-3 border-2 border-pink-300 rounded-xl shadow-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all duration-300">
     </div>
 
+    <!-- Loading/Error Indicator -->
+    <div id="statusIndicator" class="text-center p-8">
+        <!-- Initial state is loading -->
+        <div id="loadingIndicator" class="flex flex-col items-center">
+            <div class="spinner"></div>
+            <p class="mt-4 text-gray-500">Загружаем данные...</p>
+        </div>
+    </div>
+    
+    <!-- DEBUG SECTION -->
+    <div class="text-center mb-6">
+        <button onclick="showRawData()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors text-sm font-semibold shadow">
+            Показать исходные данные (DEBUG)
+        </button>
+    </div>
+    <div id="rawDataDisplay" class="max-w-6xl mx-auto mb-8">
+        <!-- Raw CSV text will be displayed here -->
+    </div>
+    <!-- END DEBUG SECTION -->
+
+    <!-- Recipe Grid -->
+    <div id="cardGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        <!-- Cards will be injected here -->
+    </div>
+    
+    <!-- Modal for Detailed View (using <dialog> element) -->
+    <dialog id="recipeModal" class="p-0 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden">
+        <div class="p-6 sm:p-8 bg-white max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-6">
+                <h2 id="modalName" class="text-3xl font-extrabold text-pink-700"></h2>
+                <button onclick="document.getElementById('recipeModal').close()" class="text-gray-500 hover:text-gray-900 transition-colors text-2xl font-bold">
+                    &times;
+                </button>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Image & Volume -->
+                <div class="lg:w-1/3 flex flex-col items-center p-4 bg-gray-50 rounded-xl shadow-inner flex-shrink-0">
+                    <p id="modalVolume" class="text-lg text-gray-500 mb-4 font-semibold"></p>
+                    <img id="modalImage" src="" alt="Фото напитка" class="rounded-lg object-cover w-full h-48 lg:h-64 mb-4" 
+                         onerror="this.onerror=null; this.src='https://placehold.co/300x400/CCCCCC/333333?text=Нет+Фото'; this.classList.add('p-8');" />
+                </div>
+                
+                <!-- Ingredients & Recipe -->
+                <div class="lg:w-2/3 space-y-6">
+                    <!-- Ingredients -->
+                    <div class="p-4 bg-pink-50 rounded-xl shadow">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b pb-2 border-pink-200">Ингредиенты:</h3>
+                        <ul id="modalIngredientsList" class="list-disc list-inside space-y-2 text-gray-600 pl-4"></ul>
+                    </div>
+                    
+                    <!-- Recipe -->
+                    <div class="p-4 bg-pink-100 rounded-xl shadow">
+                        <h3 class="text-xl font-semibold text-pink-700 mb-3 border-b pb-2 border-pink-300">Технология Приготовления:</h3>
+                        <ol id="modalStepsList" class="space-y-3 text-gray-700 pl-4"></ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
     <script>
-        // =======================================
-        // ЛОГИКА JAVASCRIPT
-        // =======================================
+        // URL вашей опубликованной Google Sheets таблицы в формате CSV
+        // !!! ВАШ URL - РАСКОММЕНТИРУЙТЕ, КОГДА БУДЕТЕ ЗАПУСКАТЬ ВНЕ САНДБОКСА (ИЛИ ПРИ УСПЕШНОМ CORS) !!!
+        // const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ukbh5K5GdykFFCDj-H0xOODUAneKWmbeJFfe4tLTCMEWKJgCkefhrCOtsKDB_QRRYySAvI1xOTh3/pub?gid=1617440067&single=true&output=csv";
+        const CSV_URL = ''; // Оставляем пустым для активации Fallback
 
-        // URL для загрузки CSV-данных
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ukbh5K5GdykFFCDj-H0xUODUAneKWmbeJFfe4tLTCMEWKJgCkefhrCOtsKDB_QRRYySAvI1xOTh3/pub?gid=1617440067&single=true&output=csv';
-
-        // Элементы DOM
-        const drinksContainer = document.getElementById('drinks-container');
-        const loadingMessage = document.getElementById('loading-message');
-        const searchInput = document.getElementById('search-input');
-        const modal = document.getElementById('modal');
-        const modalBody = document.getElementById('modal-body');
-        const closeButton = document.querySelector('.close-button');
-
-        // Глобальное хранилище данных
-        let allDrinksData = [];
-
-        /**
-         * Вспомогательная функция для очистки значения CSV: 
-         * удаление лишних пробелов, обратных слешей и окружающих кавычек.
-         * @param {string} value - Необработанное значение из CSV.
-         * @returns {string} Очищенное значение.
-         */
-        function cleanCSVValue(value) {
-            let cleaned = (value || '').trim();
-            // 1. Замена CSV-специфичных переносов строк (\r\n) и экранированных переносов (\n)
-            cleaned = cleaned.replace(/\r\n/g, '\n').replace(/\\n/g, '\n');
-            
-            // 2. Удаление внешних кавычек, если они есть
-            if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-                cleaned = cleaned.substring(1, cleaned.length - 1);
-            }
-            
-            // 3. Замена внутренних двойных кавычек (экранирование в CSV) на одиночные
-            cleaned = cleaned.replace(/""/g, '"');
-            
-            return cleaned.trim();
-        }
+        let drinkData = [];
+        let rawCsvText = ''; // Глобальная переменная для хранения сырых данных для отладки
         
-        /**
-         * Форматирует строку с нумерованным списком (1....2....)
-         * в читаемый список с переносами строк.
-         * @param {string} text - Исходный текст списка.
-         * @returns {string} Отформатированный текст.
-         */
-        function formatNumberedList(text) {
-            if (!text) return 'Не указан';
-            // 1. Очистить текст от лишних пробелов в начале/конце.
-            text = text.trim();
-            
-            // 2. Найти все шаблоны нумерации (например, "1.", "2.") и заменить их
-            // на символ переноса строки + сам шаблон.
-            // (\s*) - ловит возможные пробелы перед номером
-            // (\d+\.\s*) - ищет одну или более цифр, точку, и 0 или более пробелов.
-            let formattedText = text.replace(/(\s*)(\d+\.\s*)/g, '\n$2');
-            
-            // 3. Удаляем возможный лишний перенос строки, если он был добавлен в начале
-            if (formattedText.startsWith('\n')) {
-                formattedText = formattedText.substring(1);
-            }
+        const cardGrid = document.getElementById('cardGrid');
+        const searchBar = document.getElementById('searchBar');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const recipeModal = document.getElementById('recipeModal');
 
-            return formattedText;
+        // --- ВРЕМЕННЫЕ ДАННЫЕ ДЛЯ ДЕМОНСТРАЦИИ (FALLBACK) ---
+        const sampleData = [
+            {
+                'название': 'Латте Ванильный',
+                'объём': '300',
+                'состав': 'Эспрессо - 60 мл\nМолоко 3.2% - 200 мл\nСироп Ванильный - 20 мл',
+                'рецепт': '1. Влейте сироп в чашку.\n2. Взбейте молоко до нежной пены.\n3. Влейте молоко в чашку.\n4. Аккуратно влейте эспрессо через край.',
+                'фото': 'https://placehold.co/400x300/F4E0A0/4B3621?text=Ванильный+Латте'
+            },
+            {
+                'название': 'Флэт Уайт',
+                'объём': '180',
+                'состав': 'Двойной Ристретто - 40 мл\nМолоко 3.2% - 140 мл',
+                'рецепт': '1. Приготовьте двойной ристретто.\n2. Взбейте молоко до гладкой, шелковистой текстуры (без пышной пены).\n3. Влейте молоко, рисуя простой узор.',
+                'фото': 'https://placehold.co/400x300/4B3621/F7F7F9?text=Флэт+Уайт'
+            },
+            {
+                'название': 'Чай Облепиховый',
+                'объём': '400',
+                'состав': 'Пюре облепиховое - 60 гр\nМед - 20 гр\nКипяток - 320 мл\nЛимон - 1 долька',
+                'рецепт': '1. Положите пюре и мед в заварочный чайник.\n2. Залейте кипятком.\n3. Перемешайте и дайте настояться 5 минут.\n4. Подавайте с долькой лимона.',
+                'фото': 'https://placehold.co/400x300/FFB347/000000?text=Облепиховый+Чай'
+            }
+        ];
+        // -------------------------------------------------------------------
+
+
+        // --- DEBUG FUNCTION ---
+        function showRawData() {
+            const displayEl = document.getElementById('rawDataDisplay');
+            if (displayEl.innerHTML.trim() !== '') {
+                displayEl.innerHTML = ''; // Скрыть
+                return;
+            }
+            
+            if (rawCsvText) {
+                // Отображаем первые 10 строк сырых данных
+                const preview = rawCsvText.split('\n').slice(0, 10).join('\n');
+                displayEl.innerHTML = `
+                    <div class="max-w-xl mx-auto">
+                        <h3 class="text-lg font-bold text-gray-700 mt-4 mb-2">Полученные данные (первые 10 строк):</h3>
+                        <pre class="bg-gray-100 p-3 rounded-xl text-left text-sm border border-red-300 overflow-x-auto whitespace-pre-wrap">
+${preview}
+                        </pre>
+                        <p class="text-sm text-red-600 mt-2 font-semibold">
+                            Проверьте, что в первой строке (заголовке) есть слова: <b>название, состав, рецепт, объём, фото</b>
+                        </p>
+                    </div>
+                `;
+            } else {
+                // Изменено для отображения, что сейчас используется демо-режим
+                 displayEl.innerHTML = `<p class="text-sm text-gray-700 mt-2">Приложение использует демо-данные (fallback), т.к. загрузка с CSV_URL не удалась.</p>`;
+            }
         }
+        // --- END DEBUG FUNCTION ---
 
+        // --- CSV Parsing Logic (Detects column delimiter) ---
 
-        /**
-         * Парсит CSV текст в массив объектов, предполагая, что данные
-         * находятся в 5 отдельных столбцах.
-         * @param {string} text - Содержимое CSV файла.
-         * @returns {Array<Object>} Массив объектов напитков.
-         */
-        function parseCSV(text) {
-            // Разделяем CSV на строки, фильтруя пустые.
-            const lines = text.split('\n').filter(line => line.trim() !== '');
-            if (lines.length <= 1) return []; // Пропускаем заголовок и пустые строки
-
-            const data = [];
+        function csvToObjectArray(csvText) {
             
-            // Начинаем со второй строки (данные)
-            for (let i = 1; i < lines.length; i++) {
-                // Используем регекс для разделения по запятой, которая НЕ находится внутри кавычек.
-                // Это важно для ячеек, содержащих переносы строк (они оборачиваются в кавычки)
-                const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                
-                // Проверяем, что у нас есть хотя бы 5 столбцов (Название, Состав, Рецепт, Объём, Фото)
-                if (values.length < 5) {
-                    console.warn(`Пропущена строка ${i + 1} из-за недостаточного количества столбцов (${values.length} < 5). Содержимое строки: ${lines[i]}`);
-                    continue; // Переходим к следующей строке CSV
-                }
-                
-                const drink = {
-                    // Используем cleanCSVValue для обработки кавычек и переносов строк
-                    название: cleanCSVValue(values[0]),  // Столбец 1
-                    состав: cleanCSVValue(values[1]),    // Столбец 2
-                    рецепт: cleanCSVValue(values[2]),    // Столбец 3
-                    объём: cleanCSVValue(values[3]),     // Столбец 4
-                    фото: cleanCSVValue(values[4])       // Столбец 5
-                };
+            // 1. Разделение строк и удаление пустых
+            const lines = csvText.split('\n').filter(line => line.trim() !== '');
+            if (lines.length < 2) {
+                 console.error("Ошибка: В файле CSV меньше двух строк (заголовки + данные).");
+                 return [];
+            }
 
-                // Добавляем напиток только если есть название
-                if (drink.название) {
-                    data.push(drink);
+            const rawHeaders = lines[0].replace(/^\ufeff/, '').trim();
+            // 2. Определение разделителя (логика оставлена для случая, когда fetch все-таки сработает)
+            const commaCount = rawHeaders.split(',').length;
+            const semicolonCount = rawHeaders.split(';').length;
+            const pipeCount = rawHeaders.split('|').length; 
+
+            let columnDelimiter;
+            if (semicolonCount > commaCount && semicolonCount >= pipeCount) {
+                columnDelimiter = ';';
+            } else if (pipeCount > commaCount && pipeCount > semicolonCount) {
+                 columnDelimiter = '|';
+            } else {
+                columnDelimiter = ','; 
+            }
+            
+            // 3. Создание Regex для разделения колонок
+            const delimiterRegex = new RegExp(`${columnDelimiter}(?=(?:(?:[^"]*"){2})*[^"]*$)`, 'g');
+
+            // 4. Обработка заголовков
+            const headers = rawHeaders.split(delimiterRegex).map(header => {
+                return header.trim().toLowerCase().replace(/"/g, ''); 
+            });
+            
+            console.log("Определен разделитель колонок:", columnDelimiter); 
+            console.log("Обработанные заголовки:", headers); 
+            
+            // 4.1 Критическая проверка обязательных заголовков
+            const requiredHeaders = ['название', 'состав', 'рецепт', 'объём', 'фото'];
+            const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+            
+            if (missingHeaders.length > 0) {
+                console.error(`Критическая ошибка: В CSV отсутствуют обязательные заголовки: ${missingHeaders.join(', ')}. Проверьте первую строку таблицы.`);
+                document.getElementById('statusIndicator').innerHTML = `
+                    <div class='text-center text-red-500 p-10'>
+                        КРИТИЧЕСКАЯ ОШИБКА: Не найдены обязательные колонки: <b>${missingHeaders.join(', ')}</b>. 
+                        Убедитесь, что в первой строке таблицы точно указаны: название, состав, рецепт, объём, фото.
+                    </div>
+                `;
+                return [];
+            }
+            
+            const data = [];
+
+            // 5. Обработка данных
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].trim().split(delimiterRegex);
+                
+                if (values.length !== headers.length) {
+                    continue;
+                }
+
+                const obj = {};
+                headers.forEach((header, index) => {
+                    let value = values[index].trim().replace(/\r/g, '');
+                    // Удаляем внешние кавычки
+                    if (value.startsWith('"') && value.endsWith('"')) {
+                        value = value.substring(1, value.length - 1);
+                    }
+                    obj[header] = value;
+                });
+                
+                if (obj['название'] && obj['название'].trim() !== '') {
+                   data.push(obj);
                 }
             }
+            
+            console.log("Количество загруженных напитков:", data.length); 
             return data;
         }
 
-        /**
-         * Создает HTML-карточку для напитка.
-         * @param {Object} drink - Объект напитка.
-         * @returns {HTMLElement} HTML-элемент карточки.
-         */
-        function createDrinkCard(drink) {
-            const card = document.createElement('div');
-            card.className = 'drink-card';
+        // --- Rendering Functions (unchanged) ---
+
+        function renderGrid(data) {
+            cardGrid.innerHTML = '';
+            statusIndicator.innerHTML = '';
             
-            // Замена на заглушку, если фото отсутствует или не является URL
-            const imageUrl = drink.фото && drink.фото.startsWith('http') ? drink.фото : 'https://placehold.co/280x180/2980b9/ffffff?text=Нет+Фото';
-
-            card.innerHTML = `
-                <img 
-                    src="${imageUrl}" 
-                    alt="${drink.название}" 
-                    onerror="this.onerror=null;this.src='https://placehold.co/280x180/7f8c8d/ffffff?text=Нет+Фото'"
-                >
-                <h2>${drink.название}</h2>
-                <p>${drink.объём || 'Объём не указан'}</p>
-            `;
-            
-            // Обработчик клика
-            card.addEventListener('click', () => openModal(drink));
-
-            return card;
-        }
-        
-        /**
-         * Рендерит карточки напитков на основе переданного массива данных.
-         * @param {Array<Object>} drinks - Массив объектов напитков для отображения.
-         */
-        function renderDrinks(drinks) {
-            drinksContainer.innerHTML = ''; // Очищаем контейнер
-
-            if (drinks.length === 0) {
-                const message = document.createElement('p');
-                message.id = 'no-results';
-                message.textContent = allDrinksData.length > 0 ? 'Ничего не найдено по вашему запросу.' : 'Данные о напитках не найдены.';
-                drinksContainer.appendChild(message);
+            if (data.length === 0) {
+                statusIndicator.innerHTML = "<p class='text-gray-500 font-medium'>Ничего не найдено. Попробуйте другой поисковый запрос.</p>";
                 return;
             }
 
-            drinks.forEach(drink => {
-                const card = createDrinkCard(drink);
-                drinksContainer.appendChild(card);
-            });
-        }
-        
-        /**
-         * Фильтрует напитки на основе ввода пользователя в поле поиска.
-         * Теперь ищет по Названию, Составу и Рецепту.
-         */
-        function filterDrinks() {
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            
-            if (!searchTerm) {
-                renderDrinks(allDrinksData);
-                return;
-            }
+            data.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = "bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer p-4 border border-gray-100";
+                cardElement.dataset.index = index; 
 
-            const filtered = allDrinksData.filter(drink => {
-                // Все поля приводятся к нижнему регистру для нечувствительного к регистру поиска
-                const nameMatch = drink.название.toLowerCase().includes(searchTerm);
-                const compositionMatch = drink.состав.toLowerCase().includes(searchTerm);
-                const recipeMatch = drink.рецепт.toLowerCase().includes(searchTerm);
-                
-                // Напиток соответствует, если поиск совпал хотя бы в одном из полей
-                return nameMatch || compositionMatch || recipeMatch;
-            });
-
-            renderDrinks(filtered);
-        }
-
-
-        /**
-         * Открывает модальное окно с деталями напитка.
-         * @param {Object} drink - Объект напитка.
-         */
-        function openModal(drink) {
-            const imageUrl = drink.фото && drink.фото.startsWith('http') ? drink.фото : 'https://placehold.co/700x300/2980b9/ffffff?text=Нет+Фото';
-            
-            // 1. Форматирование состава и рецепта для новой строки
-            const formattedComposition = formatNumberedList(drink.состав);
-            const formattedRecipe = formatNumberedList(drink.рецепт);
-
-            // 2. Новая визуальная подача (Сначала Состав и Рецепт, затем Объём)
-            modalBody.innerHTML = `
-                <h2>${drink.название}</h2>
-                <img 
-                    src="${imageUrl}" 
-                    alt="${drink.название}"
-                    onerror="this.onerror=null;this.src='https://placehold.co/700x300/7f8c8d/ffffff?text=Нет+Фото'"
-                >
-
-                <div class="detail-block">
-                    <strong>Состав:</strong>
-                    <pre>${formattedComposition}</pre>
-                </div>
-
-                <div class="detail-block">
-                    <strong>Рецепт:</strong>
-                    <pre>${formattedRecipe}</pre>
-                </div>
-
-                <div class="detail-block" style="border-left-color: #27ae60;">
-                    <strong>Объём:</strong>
-                    <pre>${drink.объём || 'Не указан'}</pre>
-                </div>
-            `;
-            modal.style.display = 'block';
-        }
-
-        // Функция для закрытия модального окна
-        function closeModal() {
-            modal.style.display = 'none';
-        }
-
-        /**
-         * Основная функция инициализации: загрузка данных и рендеринг.
-         */
-        async function init() {
-            loadingMessage.textContent = 'Загрузка данных...';
-            try {
-                const response = await fetch(CSV_URL);
-                
-                if (!response.ok) {
-                    // Обработка ошибок (404/403/400), которые указывают на проблему с URL или доступом
-                    let statusText = response.statusText || 'Неизвестная ошибка';
-                    let errorMessage = `Ошибка загрузки: ${response.status} ${statusText}`;
-                    
-                    if (response.status === 404) {
-                        errorMessage += `. Пожалуйста, проверьте, что ссылка (CSV_URL) скопирована верно и ваша Google Таблица опубликована для доступа по ссылке (Файл -> Открыть доступ -> Опубликовать в интернете -> CSV).`;
-                    } else if (response.status === 403) {
-                         errorMessage += `. Доступ запрещен. Убедитесь, что таблица опубликована для всех.`;
-                    } else if (response.status === 400) {
-                         errorMessage += `. Bad Request. Это означает, что сервер (Google Sheets) не смог обработать запрос. Возможно, таблица содержит несовместимый контент или нуждается в повторной публикации. Рекомендация: Попробуйте заново выполнить "Опубликовать в интернете".`;
-                    }
-                    
-                    throw new Error(errorMessage);
-                }
-                
-                const csvText = await response.text();
-                allDrinksData = parseCSV(csvText); // Сохраняем данные глобально
-                
-                loadingMessage.style.display = 'none';
-
-                if (allDrinksData.length === 0) {
-                    // Уведомление о том, что данные не были загружены
-                    drinksContainer.innerHTML = `
-                        <p id="no-results" style="padding: 20px; max-width: 500px; margin: 40px auto; background: #ffebeb; border: 1px solid #f4c7c7; border-radius: 8px;">
-                            <strong>Не удалось загрузить данные.</strong><br>
-                            Возможно, в таблице нет строк данных, кроме заголовка.
-                        </p>
-                    `;
-                    console.log("Данные не загружены. Массив allDrinksData пуст.");
-                } else {
-                    renderDrinks(allDrinksData); // Рендерим все напитки
-                    console.log(`Успешно загружено ${allDrinksData.length} напитков.`);
-                }
-
-            } catch (error) {
-                console.error('Критическая ошибка при загрузке или обработке данных:', error);
-                // Выводим более подробную и действенную ошибку для пользователя
-                drinksContainer.innerHTML = `
-                    <p id="error-message" style="padding: 20px; max-width: 500px; margin: 40px auto; background: #ffebeb; border: 1px solid #f4c7c7; border-radius: 8px;">
-                        <strong>Критическая ошибка загрузки данных:</strong><br>
-                        ${error.message}<br><br>
-                        Для устранения ошибки:
-                        <ol style="margin-left: 20px; padding-left: 0; text-align: left; list-style-type: disc;">
-                            <li>Проверьте, что URL в начале скрипта (константа CSV_URL) полностью и верно скопирован.</li>
-                            <li>Убедитесь, что Google Таблица **опубликована в интернете** в формате **CSV** (Файл -> Открыть доступ -> Опубликовать в интернете).</li>
-                        </ol>
-                    </p>
+                cardElement.innerHTML = `
+                    <img src="${card['фото'] || 'https://placehold.co/300x200/CCCCCC/333333?text=Нет+Фото'}" 
+                         alt="${card['название']}" 
+                         class="w-full h-32 object-cover rounded-lg mb-3"
+                         onerror="this.onerror=null; this.src='https://placehold.co/300x200/CCCCCC/333333?text=Нет+Фото'; this.classList.add('p-4');" />
+                    <h3 class="text-lg font-semibold text-gray-800 truncate">${card['название'] || 'Без названия'}</h3>
+                    <p class="text-sm text-gray-500">${card['объём'] || '?'} мл</p>
                 `;
+                
+                cardElement.addEventListener('click', () => openModal(card));
+                cardGrid.appendChild(cardElement);
+            });
+        }
+        
+        function openModal(card) {
+            document.getElementById('modalName').textContent = card['название'] || 'Без названия';
+            document.getElementById('modalVolume').textContent = `Объем: ${card['объём'] || '?'} мл`;
+            document.getElementById('modalImage').src = card['фото'] || '';
+            document.getElementById('modalImage').classList.remove('p-8'); 
+
+            // ИСПОЛЬЗУЕМ НОВУЮ СТРОКУ (\n) КАК РАЗДЕЛИТЕЛЬ
+            const ingredientsListEl = document.getElementById('modalIngredientsList');
+            ingredientsListEl.innerHTML = '';
+            // Заменяем \n (иногда \r\n) на <br> для корректного отображения в модальном окне
+            const ingredients = card['состав'] ? card['состав'].split(/\r?\n/) : [];
+            ingredients.forEach(item => {
+                const cleanItem = item.trim().replace(/^\d+\.\s*/, ''); 
+                if (cleanItem) {
+                    const li = document.createElement('li');
+                    li.textContent = cleanItem;
+                    ingredientsListEl.appendChild(li);
+                }
+            });
+
+            // ИСПОЛЬЗУЕМ НОВУЮ СТРОКУ (\n) КАК РАЗДЕЛИТЕЛЬ
+            const stepsListEl = document.getElementById('modalStepsList');
+            stepsListEl.innerHTML = '';
+            const steps = card['рецепт'] ? card['рецепт'].split(/\r?\n/) : [];
+            steps.forEach(step => {
+                const cleanStep = step.trim().replace(/^\d+\.\s*/, ''); 
+                if (cleanStep) {
+                    // Используем <ol> для нумерованного списка, поэтому li не требует нумерации
+                    const li = document.createElement('li');
+                    li.textContent = cleanStep;
+                    stepsListEl.appendChild(li);
+                }
+            });
+            
+            recipeModal.showModal();
+        }
+
+        // --- Search/Filtering Logic (unchanged) ---
+        function filterDrinks() {
+            const query = searchBar.value.toLowerCase().trim();
+            if (!query) {
+                renderGrid(drinkData); 
+                return;
+            }
+
+            const filtered = drinkData.filter(card => {
+                const name = card['название'] ? card['название'].toLowerCase() : '';
+                return name.includes(query);
+            });
+            
+            renderGrid(filtered);
+        }
+
+
+        // --- Core Fetching Logic with Retry (Оставлена, но не используется, если CSV_URL пуст) ---
+
+        async function retryFetch(url, retries = 3, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        let errorText = await response.text();
+                        if (errorText.length > 200) errorText = errorText.substring(0, 200) + '...';
+                        throw new Error(`HTTP Ошибка ${response.status}. Тело ответа: ${errorText}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === retries - 1) {
+                        throw new Error(`Критическая ошибка загрузки после ${retries} попыток. Проверьте сеть, URL и настройки публикации (Publish to web) таблицы Google.`);
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delay * (2 ** i)));
+                }
             }
         }
 
-        // Обработчики событий
-        searchInput.addEventListener('input', filterDrinks);
-        closeButton.addEventListener('click', closeModal);
 
-        // Закрытие модального окна по клику вне его (на затемненном фоне)
-        window.addEventListener('click', (event) => {
-            if (event.target === modal) {
-                closeModal();
+        // --- Initialization ---
+
+        async function loadData() {
+            let fetchSuccess = false;
+
+            if (CSV_URL) {
+                try {
+                    loadingIndicator.classList.remove('hidden');
+                    const response = await retryFetch(CSV_URL); 
+                    const csvText = await response.text();
+                    rawCsvText = csvText; // Сохраняем для отладки
+                    drinkData = csvToObjectArray(csvText);
+                    fetchSuccess = drinkData.length > 0;
+
+                } catch (error) {
+                    console.error("Критическая ошибка загрузки данных из CSV:", error);
+                    // Уведомление об ошибке для UI (оставлено, если пользователь решит раскомментировать URL)
+                    statusIndicator.innerHTML = `<div class='text-center text-red-500 p-10 bg-red-50 border border-red-300 rounded-xl p-6'>
+                                                   <p class="font-bold mb-4 text-xl">⚠️ Ошибка Загрузки Данных (CORS/Сеть)</p>
+                                                   <p class="text-lg text-red-700 mb-4">Причина: <b>${error.message}</b></p>
+                                                   <p class="text-sm text-gray-700 font-semibold border-t border-red-200 pt-3">
+                                                       Если вы уверены в URL, то это может быть ограничение CORS. Приложение переключилось на демо-данные.
+                                                   </p>
+                                                </div>`;
+                }
             }
-        });
-
-        // Закрытие модального окна по кнопке ESC
-        window.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && modal.style.display === 'block') {
-                closeModal();
+            
+            // FALLBACK: Если fetch не сработал или URL пуст, используем демо-данные
+            if (!fetchSuccess) {
+                console.log("DEBUG: Загрузка демо-данных (fallback).");
+                drinkData = sampleData;
+                rawCsvText = ''; // Сбрасываем сырой текст
+                statusIndicator.innerHTML = `<p class='text-center text-green-600 font-semibold p-4 rounded-xl bg-green-100'>
+                                               ✅ Используются демонстрационные данные. 
+                                               Для использования своей таблицы раскомментируйте <code>CSV_URL</code>.
+                                            </p>`;
             }
-        });
 
-        // Запуск приложения при загрузке страницы
-        init();
+
+            if (drinkData.length > 0) {
+                loadingIndicator.classList.add('hidden');
+                // Если статус не был обновлен при ошибке, очищаем его
+                if (statusIndicator.innerHTML === '') {
+                     statusIndicator.innerHTML = ''; 
+                }
+                renderGrid(drinkData);
+                searchBar.addEventListener('input', filterDrinks);
+
+            } else {
+                // Если даже демо-данные не сработали (чего быть не должно)
+                statusIndicator.innerHTML = "<div class='text-center text-gray-500 p-10'>Критическая ошибка: Нет данных для отображения.</div>";
+            }
+            
+            loadingIndicator.classList.add('hidden');
+        }
+
+        window.onload = loadData;
+
     </script>
 </body>
 </html>
-
-
-
