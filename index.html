@@ -67,13 +67,18 @@
 <body class="p-4 sm:p-8">
 
     <header class="text-center mb-8">
-        <!-- УДАЛЕНА строка "Найдите идеальный рецепт для любого напитка." -->
         <!-- Тень текста на нейтральную --><h1 class="text-5xl font-bold text-gray-800 drop-shadow-lg" style="text-shadow: 0 0 10px #FFFFFF;">ТТК Бара</h1>
     </header>
 
-    <!-- Search Input --><div class="flex justify-center mb-8">
-        <!-- фокусное кольцо на нейтрально-серое --><input type="text" id="searchBar" placeholder="🔍 Начните вводить название напитка для поиска..." 
-               class="w-full max-w-xl p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-gray-300 placeholder-gray-500">
+    <!-- Search Input & Category Filter --><div class="flex flex-col sm:flex-row justify-center mb-8 gap-4 max-w-xl mx-auto">
+        <!-- Category Filter -->
+        <select id="categoryFilter" class="sm:w-1/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-gray-300">
+            <option value="">Все Категории</option>
+            <!-- Options populated by JS -->
+        </select>
+        <!-- Search Bar -->
+        <input type="text" id="searchBar" placeholder="🔍 Начните вводить название напитка для поиска..." 
+               class="w-full sm:w-2/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-gray-300 placeholder-gray-500">
     </div>
 
     <!-- Loading/Error Indicator --><div id="statusIndicator" class="text-center p-8">
@@ -129,9 +134,11 @@
     </dialog>
 
     <script>
-        // URL вашей опубликованной Google Sheets таблицы в формате CSV
-        // Обязательно опубликуйте таблицу в режиме "Publish to web" (File > Share > Publish to web)
+        // !!! 🛑 ВАЖНО: АДРЕС ВАШЕЙ ОПУБЛИКОВАННОЙ GOOGLE SHEETS ТАБЛИЦЫ В ФОРМАТЕ CSV !!! 🛑
+        // 🚨 ВАША ССЫЛКА НА CSV-ТАБЛИЦУ УСПЕШНО ВСТАВЛЕНА СЮДА:
+        // ----------------------------------------------------------------------------------
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ukbh5K5GdykFFCDj-H0xUODUAneKWmbeJFfe4tLTCMEWKJgCkefhrCOtsKDB_QRRYySAvI1xOTh3/pub?gid=1617440067&single=true&output=csv";
+        // ----------------------------------------------------------------------------------
 
         let drinkData = [];
         let rawCsvText = ''; 
@@ -141,26 +148,30 @@
         const statusIndicator = document.getElementById('statusIndicator');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const recipeModal = document.getElementById('recipeModal');
+        const categoryFilter = document.getElementById('categoryFilter'); // NEW: Category filter element
 
         // --- ВРЕМЕННЫЕ ДАННЫЕ ДЛЯ ДЕМОНСТРАЦИИ (FALLBACK) ---
         const sampleData = [
             {
                 'название': 'Напиток Кактус-Жасмин',
                 'объём': '350',
-                'состав': '1. ПФ Кактус-Каламанси - 100мл\n2. ПФ Чай Жасмин - 0,50мл\n3. т. Газ Вода - 0,50мл\nЛёд', // Пример ручной нумерации + позиция без номера
-                'рецепт': '1. Смешайте все компоненты, кроме льда.\n2. Перелейте в бокал, наполненный льдом.\n3. Вставьте трубочку.', // Пример ручной нумерации
+                'категория': 'Авторские Лимонады', // NEW
+                'состав': '1. ПФ Кактус-Каламанси - 100мл\n2. ПФ Чай Жасмин - 0,50мл\n3. т. Газ Вода - 0,50мл\nЛёд', 
+                'рецепт': '1. Смешайте все компоненты, кроме льда.\n2. Перелейте в бокал, наполненный льдом.\n3. Вставьте трубочку.', 
                 'фото': 'https://placehold.co/400x600/FFFFFF/666666?text=Напиток+(Демо)' 
             },
             {
                 'название': 'Флэт Уайт',
                 'объём': '180',
-                'состав': '1. Двойной Ристретто - 40 мл;2. Молоко 3.2% - 140 мл', // Пример с точкой с запятой
-                'рецепт': '1. Приготовьте двойной ристретто;2. Взбейте молоко;3. Влейте молоко.', // Пример с точкой с запятой
+                'категория': 'Кофе', // NEW
+                'состав': '1. Двойной Ристретто - 40 мл;2. Молоко 3.2% - 140 мл', 
+                'рецепт': '1. Приготовьте двойной ристретто;2. Взбейте молоко;3. Влейте молоко.', 
                 'фото': 'https://placehold.co/400x300/FFFFFF/666666?text=Флэт+Уайт+(Демо)' 
             },
             {
                 'название': 'Чай Облепиховый',
                 'объём': '400',
+                'категория': 'Чаи', // NEW
                 'состав': '1. Пюре облепиховое - 60 гр\n2. Мед - 20 гр\n3. Кипяток - 320 мл\n4. Лимон - 1 долька',
                 'рецепт': '1. Положите пюре и мед.\n2. Залейте кипятком.\n3. Настаивайте 5 минут.\n4. Подавайте с лимоном.',
                 'фото': 'https://placehold.co/400x800/FFFFFF/666666?text=Чай+(Демо)' 
@@ -174,12 +185,12 @@
             let current = '';
             let inQuotes = false;
             
-            // Итерируем по символам, чтобы корректно учесть кавычки
+            // Итерируем по символам, чтобы корректно учесть кавышки
             for (let i = 0; i < line.length; i++) {
                 const char = line[i];
                 
                 if (char === '"') {
-                    // Если это экранированная кавычка внутри поля ("" -> ")
+                    // Если это экранированная кавышка внутри поля ("" -> ")
                     if (i > 0 && line[i-1] === '"' && inQuotes) {
                          // Пропускаем, так как она будет обработана ниже
                     }
@@ -247,21 +258,27 @@
             
             // 4. Критическая проверка обязательных заголовков
             const requiredHeaders = ['название', 'состав', 'рецепт', 'объём', 'фото'];
-            const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+            const missingCriticalHeaders = requiredHeaders.filter(h => !headers.includes(h));
             
-            if (missingHeaders.length > 0) {
-                console.error(`Критическая ошибка: В CSV отсутствуют обязательные заголовки: ${missingHeaders.join(', ')}. Проверьте первую строку таблицы.`);
+            if (missingCriticalHeaders.length > 0) {
+                console.error(`Критическая ошибка: В CSV отсутствуют обязательные заголовки: ${missingCriticalHeaders.join(', ')}. Проверьте первую строку таблицы.`);
                 document.getElementById('statusIndicator').innerHTML = `
                     <div class='text-center p-10 metal-effect mt-8'>
                         <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">КРИТИЧЕСКАЯ ОШИБКА: Заголовки</p>
-                        <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Не найдены обязательные колонки: <b>${missingHeaders.join(', ')}</b>.</p>
-                        <p class="text-sm text-gray-600 drop-shadow-sm">Убедитесь, что в первой строке таблицы точно указаны: название, состав, рецепт, объём, фото.</p>
+                        <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Не найдены обязательные колонки: <b>${missingCriticalHeaders.join(', ')}</b>.</p>
+                        <p class="text-sm text-gray-600 drop-shadow-sm">Убедитесь, что в первой строке таблицы точно указаны: название, состав, рецепт, объём, фото. Колонка 'категория' желательна, но не критична.</p>
                     </div>
                 `;
                 return [];
             }
             
             const data = [];
+
+            // Дополнительная проверка на наличие колонки "категория"
+            const categoryIndex = headers.indexOf('категория');
+            if (categoryIndex === -1) {
+                console.warn("ВНИМАНИЕ: Колонка 'категория' не найдена. Напитки будут отображаться как 'Без Категории'.");
+            }
 
             // 5. Обработка данных
             for (let i = 1; i < lines.length; i++) {
@@ -278,6 +295,11 @@
                     obj[header] = values[index];
                 });
                 
+                // Если колонка 'категория' не найдена в CSV, добавляем значение по умолчанию.
+                if (categoryIndex === -1) {
+                    obj['категория'] = 'Без Категории';
+                }
+
                 if (obj['название'] && obj['название'].trim() !== '') {
                     data.push(obj);
                 }
@@ -313,6 +335,7 @@
                             class="w-full h-32 object-cover rounded-lg mb-3 border-2 border-gray-200"
                             onerror="this.onerror=null; this.src='https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'; this.classList.add('p-4');" />
                     <!-- Цвет текста заголовка на нейтрально-темный --><h3 class="text-lg font-semibold text-gray-700 drop-shadow-sm truncate w-full">${card['название'] || 'Без названия'}</h3>
+                    <!-- Отображение категории --><p class="text-xs text-gray-500 mt-1 mb-1">${card['категория'] || 'Без Категории'}</p>
                     <p class="text-sm text-gray-600 drop-shadow-sm">${card['объём'] || '?'} мл</p>
                 `;
                 
@@ -362,26 +385,67 @@
             recipeModal.showModal();
         }
 
-        // --- Search/Filtering Logic (No changes) ---
+        // --- Search/Filtering Logic ---
         function filterDrinks() {
-            const query = searchBar.value.toLowerCase().trim();
-            if (!query) {
-                renderGrid(drinkData); 
-                return;
-            }
+            const textQuery = searchBar.value.toLowerCase().trim();
+            // NEW: Получаем выбранную категорию
+            const selectedCategory = categoryFilter.value; 
 
             const filtered = drinkData.filter(card => {
                 const name = card['название'] ? card['название'].toLowerCase() : '';
-                return name.includes(query);
+                // NEW: Получаем категорию напитка (если нет, используем "Без Категории")
+                const cardCategory = card['категория'] ? card['категория'].trim() : 'Без Категории'; 
+
+                // 1. Проверка по текстовому поиску
+                const matchesText = !textQuery || name.includes(textQuery);
+                
+                // 2. Проверка по категории (если selectedCategory пуст, значит выбраны 'Все Категории' и условие true)
+                const matchesCategory = !selectedCategory || cardCategory === selectedCategory; 
+                
+                return matchesText && matchesCategory; // Должны совпадать оба условия
             });
             
             renderGrid(filtered);
+        }
+
+        // NEW: Функция для заполнения выпадающего списка категорий
+        function populateCategoryFilter(data) {
+            const categories = new Set();
+            data.forEach(drink => {
+                // Используем значение по умолчанию, если категория отсутствует
+                const category = drink['категория'] ? drink['категория'].trim() : 'Без Категории';
+                if (category) {
+                    categories.add(category);
+                }
+            });
+
+            categoryFilter.innerHTML = ''; // Очищаем список
+            
+            // 1. Опция по умолчанию (Все Категории)
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Все Категории';
+            categoryFilter.appendChild(defaultOption);
+
+            // 2. Добавление уникальных категорий
+            const sortedCategories = Array.from(categories).sort();
+            sortedCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
         }
 
 
         // --- Core Fetching Logic with Retry (No changes to fetch) ---
 
         async function retryFetch(url, retries = 3, delay = 1000) {
+            // Если URL не был заменен, не пытаемся выполнить fetch
+            if (url.includes("!!! ВСТАВЬТЕ СЮДА")) {
+                throw new Error("CSV_URL не заменен на вашу ссылку публикации.");
+            }
+            
             for (let i = 0; i < retries; i++) {
                 try {
                     const response = await fetch(url);
@@ -395,6 +459,7 @@
                     if (i === retries - 1) {
                         throw new Error(`Критическая ошибка загрузки после ${retries} попыток. Проверьте сеть, URL и настройки публикации (Publish to web) таблицы Google.`);
                     }
+                    // Экспоненциальная задержка перед следующей попыткой
                     await new Promise(resolve => setTimeout(resolve, delay * (2 ** i)));
                 }
             }
@@ -413,7 +478,6 @@
                     const csvText = await response.text();
                     rawCsvText = csvText; // Сохраняем для отладки
                     
-                    // ВЫВОД ДЛЯ ОТЛАДКИ: Вывод первых 5 строк в консоль
                     console.log("--- DEBUG: Первые 5 строк CSV ---");
                     console.log(rawCsvText.split('\n').slice(0, 5).join('\n'));
                     console.log("----------------------------------");
@@ -423,13 +487,15 @@
 
                 } catch (error) {
                     console.error("Критическая ошибка загрузки данных из CSV:", error);
-                    // Добавляем URL в сообщение об ошибке
+                    // ИЗМЕНЕНИЕ: Более подробное сообщение об ошибке с инструкциями
                     statusIndicator.innerHTML = `<div class='text-center p-10 metal-effect mt-8'>
-                                                 <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">⚠️ Ошибка Загрузки Данных (CORS/Сеть)</p>
+                                                 <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">⚠️ Ошибка Загрузки Данных (Проверьте URL)</p>
                                                  <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Причина: <b>${error.message}</b></p>
-                                                 <p class="text-sm text-gray-600 drop-shadow-sm border-t border-gray-300 pt-3 break-all">
-                                                      <b>Проверьте URL публикации:</b> ${CSV_URL} <br>
-                                                      Приложение переключилось на демо-данные.
+                                                 <p class="text-sm text-gray-600 drop-shadow-sm border-t border-gray-300 pt-3 break-all text-left">
+                                                      <b>ДЕЙСТВИЯ:</b><br>
+                                                      1. Убедитесь, что вы заменили <b>плейсхолдер</b> на вашу CSV-ссылку <b>в строке 76</b>.<br>
+                                                      2. Проверьте, что таблица <b>опубликована</b>: "Файл" -> "Поделиться" -> "Опубликовать в Интернете" (формат CSV).<br>
+                                                      ${!CSV_URL.includes("!!! ВСТАВЬТЕ СЮДА") ? `3. Используемая ссылка: <b>${CSV_URL}</b>` : ''}
                                                  </p>
                                              </div>`;
                 }
@@ -441,7 +507,9 @@
                 drinkData = sampleData;
                 rawCsvText = ''; // Сбрасываем сырой текст
                 // Стиль сообщения о демо-данных на нейтральный
-                statusIndicator.innerHTML = `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
+                statusIndicator.innerHTML = (statusIndicator.innerHTML.includes("Ошибка Загрузки Данных")) ? statusIndicator.innerHTML + `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
+                                             ✅ Приложение переключилось на демонстрационные данные.
+                                           </p>` : `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
                                              ✅ Используются демонстрационные данные (ошибка загрузки с CSV_URL).
                                            </p>`;
             }
@@ -450,11 +518,17 @@
             if (drinkData.length > 0) {
                 loadingIndicator.classList.add('hidden');
                 // Если сработал fallback, не затираем сообщение о нем
-                if (statusIndicator.innerHTML === '' || statusIndicator.innerHTML.includes('КРИТИЧЕСКАЯ ОШИБКА: Заголовки')) {
+                if (!statusIndicator.innerHTML.includes("демонстрационные данные")) {
                      statusIndicator.innerHTML = ''; 
                 }
+                
+                // NEW: Заполняем фильтр категорий
+                populateCategoryFilter(drinkData);
+
                 renderGrid(drinkData);
                 searchBar.addEventListener('input', filterDrinks);
+                // NEW: Добавляем слушатель события для фильтра по категориям
+                categoryFilter.addEventListener('change', filterDrinks); 
 
             } else {
                 statusIndicator.innerHTML = "<div class='text-center text-gray-800 p-10 drop-shadow-md'>Критическая ошибка: Нет данных для отображения.</div>";
@@ -468,4 +542,3 @@
     </script>
 </body>
 </html>
-
