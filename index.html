@@ -128,9 +128,8 @@
 
     <script>
         // URL вашей опубликованной Google Sheets таблицы в формате CSV
-        // !!! ВАШ URL - РАСКОММЕНТИРУЙТЕ, КОГДА БУДЕТЕ ЗАПУСКАТЬ ВНЕ САНДБОКСА (ИЛИ ПРИ УСПЕШНОМ CORS) !!!
-        // const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ukbh5K5GdykFFCDj-H0xOODUAneKWmbeJFfe4tLTCMEWKJgCkefhrCOtsKDB_QRRYySAvI1xOTh3/pub?gid=1617440067&single=true&output=csv";
-        const CSV_URL = ''; // Оставляем пустым для активации Fallback
+        // Обязательно опубликуйте таблицу в режиме "Publish to web" (File > Share > Publish to web)
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ukbh5K5GdykFFCDj-H0xUODUAneKWmbeJFfe4tLTCMEWKJgCkefhrCOtsKDB_QRRYySAvI1xOTh3/pub?gid=1617440067&single=true&output=csv";
 
         let drinkData = [];
         let rawCsvText = ''; 
@@ -142,6 +141,7 @@
         const recipeModal = document.getElementById('recipeModal');
 
         // --- ВРЕМЕННЫЕ ДАННЫЕ ДЛЯ ДЕМОНСТРАЦИИ (FALLBACK) ---
+        // Эти данные будут использоваться только в случае ошибки загрузки с CSV_URL
         const sampleData = [
             {
                 'название': 'Латте Ванильный',
@@ -220,7 +220,7 @@
                 console.error(`Критическая ошибка: В CSV отсутствуют обязательные заголовки: ${missingHeaders.join(', ')}. Проверьте первую строку таблицы.`);
                 document.getElementById('statusIndicator').innerHTML = `
                     <div class='text-center p-10 metal-effect mt-8'>
-                        <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">КРИТИЧЕСКАЯ ОШИБКА:</p>
+                        <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">КРИТИЧЕСКАЯ ОШИБКА: Заголовки</p>
                         <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Не найдены обязательные колонки: <b>${missingHeaders.join(', ')}</b>.</p>
                         <p class="text-sm text-gray-600 drop-shadow-sm">Убедитесь, что в первой строке таблицы точно указаны: название, состав, рецепт, объём, фото.</p>
                     </div>
@@ -261,7 +261,10 @@
 
         function renderGrid(data) {
             cardGrid.innerHTML = '';
-            statusIndicator.innerHTML = '';
+            // Удаляем индикатор статуса, только если есть данные
+            if (data !== sampleData) {
+                statusIndicator.innerHTML = ''; 
+            }
             
             if (data.length === 0) {
                 statusIndicator.innerHTML = "<p class='text-gray-600 font-medium'>Ничего не найдено. Попробуйте другой поисковый запрос.</p>";
@@ -378,32 +381,34 @@
 
                 } catch (error) {
                     console.error("Критическая ошибка загрузки данных из CSV:", error);
+                    // ИЗМЕНЕНИЕ: Добавляем URL в сообщение об ошибке
                     statusIndicator.innerHTML = `<div class='text-center p-10 metal-effect mt-8'>
                                                  <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">⚠️ Ошибка Загрузки Данных (CORS/Сеть)</p>
                                                  <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Причина: <b>${error.message}</b></p>
-                                                 <p class="text-sm text-gray-600 drop-shadow-sm border-t border-gray-300 pt-3">
-                                                      Если вы уверены в URL, это может быть ограничение CORS. Приложение переключилось на демо-данные.
+                                                 <p class="text-sm text-gray-600 drop-shadow-sm border-t border-gray-300 pt-3 break-all">
+                                                      <b>Проверьте URL публикации:</b> ${CSV_URL} <br>
+                                                      Приложение переключилось на демо-данные.
                                                  </p>
                                              </div>`;
                 }
             }
             
-            // FALLBACK: Если fetch не сработал или URL пуст, используем демо-данные
+            // FALLBACK: Если fetch не сработал, используем демо-данные
             if (!fetchSuccess) {
                 console.log("DEBUG: Загрузка демо-данных (fallback).");
                 drinkData = sampleData;
                 rawCsvText = ''; // Сбрасываем сырой текст
                 // Стиль сообщения о демо-данных на нейтральный
                 statusIndicator.innerHTML = `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
-                                             ✅ Используются демонстрационные данные. 
-                                             Для использования своей таблицы раскомментируйте <code>CSV_URL</code>.
+                                             ✅ Используются демонстрационные данные (ошибка загрузки с CSV_URL).
                                            </p>`;
             }
 
 
             if (drinkData.length > 0) {
                 loadingIndicator.classList.add('hidden');
-                if (statusIndicator.innerHTML === '') {
+                // Если сработал fallback, не затираем сообщение о нем
+                if (statusIndicator.innerHTML === '' || statusIndicator.innerHTML.includes('КРИТИЧЕСКАЯ ОШИБКА: Заголовки')) {
                      statusIndicator.innerHTML = ''; 
                 }
                 renderGrid(drinkData);
