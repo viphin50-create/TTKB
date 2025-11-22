@@ -86,7 +86,9 @@
     <!-- Recipe Grid --><div id="cardGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
         <!-- Cards will be injected here --></div>
     
-    <!-- Modal for Detailed View (using <dialog> element) --><dialog id="recipeModal" class="p-0 rounded-2xl metal-effect max-w-3xl w-full mx-4 overflow-hidden">
+    <!-- Modal for Detailed View (using <dialog> element) -->
+    <!-- ИЗМЕНЕНИЕ: Уменьшение ширины для лучшей адаптивности на мобильных и ноутах -->
+    <dialog id="recipeModal" class="p-0 rounded-2xl metal-effect w-11/12 max-w-2xl lg:max-w-3xl mx-auto overflow-hidden">
         <div class="p-6 sm:p-8 bg-white/20 max-h-[90vh] overflow-y-auto"> <!-- Фон внутри модального окна --><div class="flex justify-between items-start mb-6">
                 <!-- Название в модальном окне - темный текст с белой тенью --><h2 id="modalName" class="text-3xl font-extrabold text-gray-700 drop-shadow-md" style="text-shadow: 0 0 5px #FFFFFF;"></h2>
                 <!-- Кнопка закрытия - нейтральный цвет --><button onclick="document.getElementById('recipeModal').close()" 
@@ -416,4 +418,3 @@
     </script>
 </body>
 </html>
-
