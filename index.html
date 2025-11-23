@@ -13,35 +13,86 @@
             background-color: #E0E0E0;
             color: #333333;
             min-height: 100vh;
-            background-image: linear-gradient(to right, #F0F0F0 0%, #FFFFFF 50%, #F0F0F0 100%);
-            background-size: 100% 1px;
-            background-repeat: repeat-y;
+            background-image: linear-gradient(135deg, #F9F9F9 0%, #E8E8E8 100%);
             background-attachment: fixed;
         }
 
+        /* Общий стиль для интерактивных элементов */
         .metal-effect {
-            background-color: rgba(255, 255, 255, 0.25);
+            background-color: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.7);
             border-radius: 12px; 
             box-shadow: 
-                0 0 10px rgba(255, 255, 255, 0.6),
-                0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease-in-out;
+                0 4px 15px rgba(0, 0, 0, 0.1),
+                0 0 10px rgba(255, 255, 255, 0.8) inset;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
+        /* Улучшенный эффект при наведении для общих "metal-effect" */
         .metal-effect:hover {
-            border-color: rgba(255, 255, 255, 1);
-            box-shadow: 0 0 15px rgba(255, 255, 255, 1);
+            border-color: rgba(167, 215, 249, 1); /* Светло-голубой акцент */
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.15),
+                0 0 20px rgba(167, 215, 249, 0.8) inset; /* Более сильное внутреннее свечение */
+            transform: translateY(-2px) scale(1.01); /* Немного поднимается и чуть увеличивается */
+        }
+
+        /* --- Специфический эффект для карточек в сетке --- */
+        .card-item:hover {
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.2), /* Более выраженная тень */
+                0 0 30px rgba(167, 215, 249, 1); /* Свечение светло-голубого цвета */
+            border-color: rgba(167, 215, 249, 1);
+            transform: translateY(-5px) scale(1.02); /* Чуть больше поднимается и увеличивается */
+        }
+
+        .card-item:active {
+            transform: translateY(0) scale(0.98); /* Эффект "нажатия" - вдавливание */
+            box-shadow: 
+                0 2px 5px rgba(0, 0, 0, 0.1),
+                0 0 10px rgba(167, 215, 249, 0.5); /* Более мягкое свечение при нажатии */
+            border-color: rgba(167, 215, 249, 0.5);
+        }
+        /* -------------------------------------------------------- */
+        
+        /* Анимация появления карточек в сетке */
+        .card-enter {
+            animation: fadeInSlideUp 0.6s ease-out forwards;
+            opacity: 0;
         }
         
+        @keyframes fadeInSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
         dialog::backdrop {
-            background-color: rgba(0, 0, 0, 0.4); 
-            backdrop-filter: blur(4px);
+            background-color: rgba(0, 0, 0, 0.5); 
+            backdrop-filter: blur(8px);
         }
         
         dialog[open] {
-            max-height: 90vh;
+            max-height: 95vh;
+            opacity: 0;
+            animation: modalFadeIn 0.3s ease-out forwards;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .spinner {
@@ -49,8 +100,8 @@
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            border-left-color: #FFFFFF;
-            animation: spin 1s ease infinite;
+            border-left-color: #4A90E2;
+            animation: spin 1s linear infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -58,7 +109,7 @@
         }
 
         .ingredient-button {
-            color: #0056b3;
+            color: #4A90E2;
             font-weight: 600;
             text-decoration: underline;
             cursor: pointer;
@@ -66,36 +117,48 @@
             border: none;
             padding: 0;
             text-align: left;
-            display: inline; /* ВАЖНО: для сохранения в строке */
+            display: inline;
         }
         .ingredient-button:hover {
-            color: #003d80;
+            color: #0056b3;
         }
-        /* Убираем стандартные маркеры списка, так как используем нумерацию из CSV */
+
         #modalIngredientsList, #modalStepsList {
             list-style: none;
             padding-left: 0;
+        }
+
+        .close-button {
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #333;
+            transition: all 0.2s;
+        }
+        .close-button:hover {
+            background-color: #4A90E2;
+            color: white;
+            transform: rotate(90deg);
         }
     </style>
 </head>
 <body class="p-4 sm:p-8">
 
     <header class="text-center mb-8">
-        <h1 class="text-5xl font-bold text-gray-800 drop-shadow-lg" style="text-shadow: 0 0 10px #FFFFFF;">ТТК Бара</h1>
+        <h1 class="text-5xl font-bold text-gray-800 drop-shadow-lg" style="text-shadow: 0 0 10px #FFFFFF;">Технологические Карты Бара</h1>
+        <p class="text-gray-500 mt-2">Интерактивный каталог с переходами между составными частями.</p>
     </header>
 
     <div class="flex flex-col sm:flex-row justify-center mb-8 gap-4 max-w-xl mx-auto">
-        <select id="categoryFilter" class="sm:w-1/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-gray-300">
+        <select id="categoryFilter" class="sm:w-1/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300">
             <option value="">Все Категории</option>
         </select>
         <input type="text" id="searchBar" placeholder="🔍 Начните вводить название напитка для поиска..." 
-                class="w-full sm:w-2/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-gray-300 placeholder-gray-500">
+                class="w-full sm:w-2/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300 placeholder-gray-500">
     </div>
 
     <div id="statusIndicator" class="text-center p-8">
         <div id="loadingIndicator" class="flex flex-col items-center">
             <div class="spinner"></div>
-            <p class="mt-4 text-gray-600">Загружаем данные...</p>
+            <p class="mt-4 text-gray-600">Загружаем данные. Пожалуйста, подождите...</p>
         </div>
     </div>
     
@@ -103,11 +166,11 @@
     </div>
     
     <dialog id="recipeModal" class="p-0 rounded-2xl metal-effect w-11/12 max-w-2xl lg:max-w-3xl mx-auto overflow-hidden">
-        <div class="p-6 sm:p-8 bg-white/20 max-h-[90vh] overflow-y-auto">
+        <div class="p-6 sm:p-8 bg-white/50 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-start mb-6">
                 <h2 id="modalName" class="text-3xl font-extrabold text-gray-700 drop-shadow-md" style="text-shadow: 0 0 5px #FFFFFF;"></h2>
                 <button onclick="document.getElementById('recipeModal').close()" 
-                        class="text-gray-600 text-opacity-70 hover:text-opacity-100 transition-colors text-2xl font-bold p-2 metal-effect rounded-full w-10 h-10 flex items-center justify-center">
+                        class="close-button text-2xl font-bold p-2 metal-effect rounded-full w-10 h-10 flex items-center justify-center">
                     &times;
                 </button>
             </div>
@@ -142,8 +205,6 @@
         let allCardData = [];
         const cardDataMap = new Map();
         
-        let rawCsvText = '';
-        
         const cardGrid = document.getElementById('cardGrid');
         const searchBar = document.getElementById('searchBar');
         const statusIndicator = document.getElementById('statusIndicator');
@@ -156,15 +217,15 @@
                 'название': 'Напиток Кактус-Жасмин',
                 'объём': '350',
                 'категория': 'Авторские Лимонады',
-                'состав': '1. ПФ Кактус-Каламанси - 100мл\n2. ПФ Чай Жасмин - 0,50мл\n3. Газ Вода - 0,50мл\n4. Лёд', 
-                'рецепт': '1. Смешайте все компоненты, кроме льда.\n2. Перелейте в бокал, наполненный льдом.\n3. Вставьте трубочку.', 
+                'состав': '1. ПФ Кактус-Каламанси - 100мл; 2. ПФ Чай Жасмин - 0,50мл; 3. Газ Вода - 0,50мл; 4. Лёд', 
+                'рецепт': '1. Смешайте все компоненты, кроме льда; 2. Перелейте в бокал, наполненный льдом; 3. Вставьте трубочку.', 
                 'фото': 'https://placehold.co/400x600/FFFFFF/666666?text=Напиток+(Демо)' 
             },
             {
                 'название': 'ПФ Кактус-Каламанси',
                 'объём': '1000',
                 'категория': 'Полуфабрикаты',
-                'состав': '1. Пюре Кактус - 500гр\n2. Сок Каламанси - 500гр',
+                'состав': '1. Пюре Кактус - 500гр; 2. Сок Каламанси - 500гр',
                 'рецепт': '1. Смешать до однородной массы.',
                 'фото': 'https://placehold.co/400x300/FFFFFF/666666?text=ПФ+(Демо)' 
             },
@@ -180,8 +241,8 @@
                 'название': 'Флэт Уайт',
                 'объём': '180',
                 'категория': 'Кофе',
-                'состав': '1. Двойной Ристретто - 40 мл;2. Молоко 3.2% - 140 мл', 
-                'рецепт': '1. Приготовьте двойной ристретто;2. Взбейте молоко;3. Влейте молоко.', 
+                'состав': '1. Двойной Ристретто - 40 мл; 2. Молоко 3.2% - 140 мл', 
+                'рецепт': '1. Приготовьте двойной ристретто; 2. Взбейте молоко; 3. Влейте молоко.', 
                 'фото': 'https://placehold.co/400x300/FFFFFF/666666?text=Флэт+Уайт+(Демо)' 
             }
         ];
@@ -301,13 +362,15 @@
 
             data.forEach((card, index) => {
                 const cardElement = document.createElement('div');
-                cardElement.className = "metal-effect p-4 overflow-hidden hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer flex flex-col items-center text-center hover:border-gray-300";
+                cardElement.className = "metal-effect p-4 overflow-hidden cursor-pointer flex flex-col items-center text-center card-item"; // Добавлен класс card-item
+                cardElement.classList.add('card-enter');
+                cardElement.style.animationDelay = `${index * 0.05}s`; 
                 cardElement.dataset.index = index; 
 
                 cardElement.innerHTML = `
                     <img src="${card['фото'] || 'https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'}" 
                             alt="${card['название']}" 
-                            class="w-full h-32 object-cover rounded-lg mb-3 border-2 border-gray-200"
+                            class="w-full h-32 object-contain rounded-lg mb-3 border-2 border-gray-200 bg-white" 
                             onerror="this.onerror=null; this.src='https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'; this.classList.add('p-4');" />
                     <h3 class="text-lg font-semibold text-gray-700 drop-shadow-sm truncate w-full">${card['название'] || 'Без названия'}</h3>
                     <p class="text-xs text-gray-500 mt-1 mb-1">${card['категория'] || 'Без Категории'}</p>
@@ -322,15 +385,15 @@
         function openModal(card) {
             document.getElementById('modalName').textContent = card['название'] || 'Без названия';
             document.getElementById('modalVolume').textContent = `Объем: ${card['объём'] || '?'} мл`; 
-            document.getElementById('modalImage').src = card['фото'] || '';
-            document.getElementById('modalImage').classList.remove('p-8'); 
-
+            
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = card['фото'] || '';
+            modalImage.classList.remove('p-8'); 
+            
             const ingredientsListEl = document.getElementById('modalIngredientsList');
             ingredientsListEl.innerHTML = '';
             
-            // Разбиваем ингредиенты по точке с запятой ИЛИ по новой строке.
             const ingredients = card['состав'] ? card['состав'].split(/[;\r?\n]+/).filter(item => item.trim() !== '') : [];
-            
             const currentCardNameLower = (card['название'] || '').toLowerCase().trim();
 
             ingredients.forEach(item => {
@@ -340,11 +403,6 @@
                 const li = document.createElement('li');
                 li.className = "text-gray-700";
 
-                // Улучшенное Регулярное выражение:
-                // [1]: ([\d.]+\s*)? - Префикс (нумерация + пробел, опционально)
-                // [2]: ([^:;-]+) - Название ингредиента (любой текст до первого разделителя :;- )
-                // [3]: ([:;-].*)? - Суффикс (разделитель + остаток строки, опционально)
-                // Мы используем [^:;-]+ чтобы захватить как можно больше текста, который может быть названием.
                 const match = cleanItem.match(/^([\d.]+\s*)?([^:;-]+)([:;-].*)?$/); 
 
                 let prefix = '';
@@ -353,46 +411,38 @@
                 
                 if (match) {
                     prefix = match[1] || '';
-                    // match[2] - это название, но мы должны убедиться, что оно не пустое
                     ingredientName = match[2] ? match[2].trim() : cleanItem; 
                     suffix = match[3] || '';
                 } 
                 
-                // В случае, если регулярное выражение не сработало или название пустое, используем полный текст
                 if (!match || !match[2]) {
                     prefix = '';
                     ingredientName = cleanItem;
                     suffix = '';
                 }
 
-
                 const lowerIngredientName = ingredientName.toLowerCase().trim();
 
-                // Проверяем, есть ли карточка для этого ингредиента И это не текущая карточка
                 if (cardDataMap.has(lowerIngredientName) && lowerIngredientName !== currentCardNameLower) {
                     
-                    // 1. Добавляем префикс (номер)
                     if (prefix) {
                         li.appendChild(document.createTextNode(prefix));
                     }
 
-                    // 2. Создаем и добавляем кнопку (Название)
                     const button = document.createElement('button');
                     button.className = 'ingredient-button';
                     button.textContent = ingredientName;
                     button.onclick = (e) => {
-                        e.stopPropagation(); // Предотвращаем закрытие модального окна, если вдруг кликнет вне кнопки
+                        e.stopPropagation(); 
                         showLinkedCard(lowerIngredientName);
                     };
                     li.appendChild(button);
 
-                    // 3. Добавляем суффикс (количество)
                     if (suffix) {
                         li.appendChild(document.createTextNode(suffix));
                     }
 
                 } else {
-                    // Это просто текст (не связанный ингредиент или сам напиток)
                     li.textContent = cleanItem; 
                 }
                 
@@ -401,14 +451,17 @@
 
             const stepsListEl = document.getElementById('modalStepsList');
             stepsListEl.innerHTML = '';
-            // Разбиваем шаги по точке с запятой ИЛИ по новой строке.
             const steps = card['рецепт'] ? card['рецепт'].split(/[;\r?\n]+/).filter(step => step.trim() !== '') : [];
             
             steps.forEach(step => {
                 const cleanStep = step.trim(); 
                 if (cleanStep) {
                     const li = document.createElement('li');
-                    li.textContent = cleanStep;
+                    if (!cleanStep.match(/^[\d.]+\s/)) {
+                         li.innerHTML = `&bull; ${cleanStep}`;
+                    } else {
+                        li.textContent = cleanStep;
+                    }
                     li.className = "text-gray-700"; 
                     stepsListEl.appendChild(li);
                 }
@@ -497,7 +550,6 @@
                     loadingIndicator.classList.remove('hidden');
                     const response = await retryFetch(CSV_URL); 
                     const csvText = await response.text();
-                    rawCsvText = csvText;
                     
                     allCardData = csvToObjectArray(csvText);
                     
@@ -527,7 +579,6 @@
             
             if (!fetchSuccess) {
                 allCardData = sampleData;
-                rawCsvText = '';
                 
                 cardDataMap.clear();
                 allCardData.forEach(card => {
@@ -568,3 +619,4 @@
     </script>
 </body>
 </html>
+
