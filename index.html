@@ -182,7 +182,7 @@
                     <p id="modalVolume" class="text-lg text-gray-700 font-semibold mb-3"></p> 
                     <img id="modalImage" src="" alt="Фото напитка" 
                         class="rounded-lg object-contain w-full h-auto max-h-[70vh] border-2 border-gray-300/50" 
-                        onerror="this.onerror=null; this.src='https://placehold.co/300x400/FFFFFF/666666?text=Нет+Фото';" /> <!-- Упрощен onerror -->
+                        onerror="this.onerror=null; this.src='https://placehold.co/300x400/FFFFFF/666666?text=Нет+Фото';" />
                 </div>
                 
                 <div class="lg:w-2/3 space-y-6">
@@ -223,7 +223,7 @@
                 'фото': 'https://placehold.co/400x600/FFFFFF/666666?text=Напиток+(Демо)' 
             },
             {
-                'название': 'ПФ Кактус-Каламанси',
+                'название': 'ПФ Кактус-Каламанси (Очень Длинное Название)',
                 'объём': '1000',
                 'категория': 'Полуфабрикаты',
                 'состав': '1. Пюре Кактус - 500гр; 2. Сок Каламанси - 500гр',
@@ -368,7 +368,6 @@
                 cardElement.style.animationDelay = `${index * 0.05}s`; 
                 cardElement.dataset.index = index; 
 
-                // FIX: Оборачиваем изображение в DIV и максимально упрощаем onerror на IMAG
                 cardElement.innerHTML = `
                     <div class="w-full h-24 mb-2 rounded-lg border-2 border-gray-200 bg-white flex items-center justify-center overflow-hidden">
                         <img src="${card['фото'] || 'https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'}" 
@@ -376,7 +375,10 @@
                                 class="w-full h-full object-contain" 
                                 onerror="this.onerror=null; this.src='https://placehold.co/300x200/CCCCCC/666666?text=Нет+Фото';" />
                     </div>
-                    <h3 class="text-base font-semibold text-gray-700 drop-shadow-sm truncate w-full">${card['название'] || 'Без названия'}</h3>
+                    <!-- ИСПРАВЛЕНИЕ: Удален 'truncate', уменьшен шрифт до text-sm, добавлено leading-tight -->
+                    <h3 class="text-sm font-semibold text-gray-700 drop-shadow-sm w-full leading-tight mb-1">
+                        ${card['название'] || 'Без названия'}
+                    </h3>
                     <p class="text-xs text-gray-500 mt-1 mb-1">${card['категория'] || 'Без Категории'}</p>
                     <p class="text-sm text-gray-600 drop-shadow-sm">${card['объём'] || '?'} мл</p>
                 `;
@@ -392,7 +394,6 @@
             
             const modalImage = document.getElementById('modalImage');
             modalImage.src = card['фото'] || '';
-            // FIX: Убираем classList.add('p-8') из JS, так как это может быть причиной ошибки
             
             const ingredientsListEl = document.getElementById('modalIngredientsList');
             ingredientsListEl.innerHTML = '';
@@ -628,5 +629,4 @@
     </script>
 </body>
 </html>
-
 
