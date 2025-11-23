@@ -162,7 +162,8 @@
         </div>
     </div>
     
-    <div id="cardGrid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
+    <!-- Сетка с 3 колонками на узких экранах и до 6 на широких -->
+    <div id="cardGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl mx-auto">
     </div>
     
     <dialog id="recipeModal" class="p-0 rounded-2xl metal-effect w-11/12 max-w-2xl lg:max-w-3xl mx-auto overflow-hidden">
@@ -181,7 +182,7 @@
                     <p id="modalVolume" class="text-lg text-gray-700 font-semibold mb-3"></p> 
                     <img id="modalImage" src="" alt="Фото напитка" 
                         class="rounded-lg object-contain w-full h-auto max-h-[70vh] border-2 border-gray-300/50" 
-                        onerror="this.onerror=null; this.src='https://placehold.co/300x400/FFFFFF/666666?text=Нет+Фото'; this.classList.add('p-8');" />
+                        onerror="this.onerror=null; this.src='https://placehold.co/300x400/FFFFFF/666666?text=Нет+Фото';" /> <!-- Упрощен onerror -->
                 </div>
                 
                 <div class="lg:w-2/3 space-y-6">
@@ -362,17 +363,20 @@
 
             data.forEach((card, index) => {
                 const cardElement = document.createElement('div');
-                cardElement.className = "metal-effect p-4 overflow-hidden cursor-pointer flex flex-col items-center text-center card-item"; // Добавлен класс card-item
+                cardElement.className = "metal-effect p-3 overflow-hidden cursor-pointer flex flex-col items-center text-center card-item"; 
                 cardElement.classList.add('card-enter');
                 cardElement.style.animationDelay = `${index * 0.05}s`; 
                 cardElement.dataset.index = index; 
 
+                // FIX: Оборачиваем изображение в DIV и максимально упрощаем onerror на IMAG
                 cardElement.innerHTML = `
-                    <img src="${card['фото'] || 'https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'}" 
-                            alt="${card['название']}" 
-                            class="w-full h-32 object-contain rounded-lg mb-3 border-2 border-gray-200 bg-white" 
-                            onerror="this.onerror=null; this.src='https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'; this.classList.add('p-4');" />
-                    <h3 class="text-lg font-semibold text-gray-700 drop-shadow-sm truncate w-full">${card['название'] || 'Без названия'}</h3>
+                    <div class="w-full h-24 mb-2 rounded-lg border-2 border-gray-200 bg-white flex items-center justify-center overflow-hidden">
+                        <img src="${card['фото'] || 'https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'}" 
+                                alt="${card['название']}" 
+                                class="w-full h-full object-contain" 
+                                onerror="this.onerror=null; this.src='https://placehold.co/300x200/CCCCCC/666666?text=Нет+Фото';" />
+                    </div>
+                    <h3 class="text-base font-semibold text-gray-700 drop-shadow-sm truncate w-full">${card['название'] || 'Без названия'}</h3>
                     <p class="text-xs text-gray-500 mt-1 mb-1">${card['категория'] || 'Без Категории'}</p>
                     <p class="text-sm text-gray-600 drop-shadow-sm">${card['объём'] || '?'} мл</p>
                 `;
@@ -388,7 +392,7 @@
             
             const modalImage = document.getElementById('modalImage');
             modalImage.src = card['фото'] || '';
-            modalImage.classList.remove('p-8'); 
+            // FIX: Убираем classList.add('p-8') из JS, так как это может быть причиной ошибки
             
             const ingredientsListEl = document.getElementById('modalIngredientsList');
             ingredientsListEl.innerHTML = '';
@@ -403,15 +407,19 @@
                 const li = document.createElement('li');
                 li.className = "text-gray-700";
 
-                const match = cleanItem.match(/^([\d.]+\s*)?([^:;-]+)([:;-].*)?$/); 
+                // Улучшенный парсинг для поиска названия ингредиента
+                const match = cleanItem.match(/^([\d.,\s\w]+\s*)?([^:;-]+)([:;-].*)?$/); 
 
                 let prefix = '';
                 let ingredientName = cleanItem;
                 let suffix = '';
                 
                 if (match) {
+                    // Группа 1: Количество и Ед. изм.
                     prefix = match[1] || '';
+                    // Группа 2: Название (до разделителя или конца строки)
                     ingredientName = match[2] ? match[2].trim() : cleanItem; 
+                    // Группа 3: Разделитель и остаток
                     suffix = match[3] || '';
                 } 
                 
@@ -489,7 +497,8 @@
                 const matchesCategory = !selectedCategory || cardCategory === selectedCategory; 
                 
                 return matchesText && matchesCategory;
-            });
+            }
+            );
             
             renderGrid(filtered);
         }
@@ -619,4 +628,5 @@
     </script>
 </body>
 </html>
+
 
