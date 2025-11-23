@@ -8,38 +8,33 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-        /* ИЗМЕНЕНИЕ: Фон в стиле ЯРКИЙ Шлифованный Металл (ближе к белому) */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #E0E0E0; /* Базовый очень светлый металлический серый */
-            color: #333333; /* Темный текст для контраста */
+            background-color: #E0E0E0;
+            color: #333333;
             min-height: 100vh;
-            /* Имитация вертикально шлифованного металла, очень светлые тона */
             background-image: linear-gradient(to right, #F0F0F0 0%, #FFFFFF 50%, #F0F0F0 100%);
-            background-size: 100% 1px; /* Очень тонкие горизонтальные линии для текстуры */
+            background-size: 100% 1px;
             background-repeat: repeat-y;
             background-attachment: fixed;
         }
 
-        /* Стили для стеклянных элементов с НЕЙТРАЛЬНОЙ подсветкой */
         .metal-effect {
-            background-color: rgba(255, 255, 255, 0.25); /* Нейтральный полупрозрачный фон, чуть ярче */
-            backdrop-filter: blur(10px); /* Стеклянный эффект */
-            border: 1px solid rgba(255, 255, 255, 0.6); /* Легкий белый край, чуть ярче */
+            background-color: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
             border-radius: 12px; 
             box-shadow: 
-                0 0 10px rgba(255, 255, 255, 0.6), /* Нейтральное (серебристое) свечение, чуть ярче */
-                0 4px 6px rgba(0, 0, 0, 0.1); /* Мягкая тень */
+                0 0 10px rgba(255, 255, 255, 0.6),
+                0 4px 6px rgba(0, 0, 0, 0.1);
             transition: all 0.2s ease-in-out;
         }
         
-        /* Стили для элементов при наведении (более яркое нейтральное свечение) */
         .metal-effect:hover {
-            border-color: rgba(255, 255, 255, 1); /* Яркий белый при наведении */
-            box-shadow: 0 0 15px rgba(255, 255, 255, 1); /* Более сильное нейтральное свечение */
+            border-color: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 1);
         }
         
-        /* Модальное окно backdrop */
         dialog::backdrop {
             background-color: rgba(0, 0, 0, 0.4); 
             backdrop-filter: blur(4px);
@@ -49,55 +44,69 @@
             max-height: 90vh;
         }
 
-        /* Loading spinner animation - теперь нейтральный */
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.2); 
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            border-left-color: #FFFFFF; /* Нейтральный акцент */
+            border-left-color: #FFFFFF;
             animation: spin 1s ease infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .ingredient-button {
+            color: #0056b3;
+            font-weight: 600;
+            text-decoration: underline;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            text-align: left;
+            display: inline; /* ВАЖНО: для сохранения в строке */
+        }
+        .ingredient-button:hover {
+            color: #003d80;
+        }
+        /* Убираем стандартные маркеры списка, так как используем нумерацию из CSV */
+        #modalIngredientsList, #modalStepsList {
+            list-style: none;
+            padding-left: 0;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8">
 
     <header class="text-center mb-8">
-        <!-- Тень текста на нейтральную --><h1 class="text-5xl font-bold text-gray-800 drop-shadow-lg" style="text-shadow: 0 0 10px #FFFFFF;">ТТК Бара</h1>
+        <h1 class="text-5xl font-bold text-gray-800 drop-shadow-lg" style="text-shadow: 0 0 10px #FFFFFF;">ТТК Бара</h1>
     </header>
 
-    <!-- Search Input & Category Filter --><div class="flex flex-col sm:flex-row justify-center mb-8 gap-4 max-w-xl mx-auto">
-        <!-- Category Filter -->
+    <div class="flex flex-col sm:flex-row justify-center mb-8 gap-4 max-w-xl mx-auto">
         <select id="categoryFilter" class="sm:w-1/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-gray-300">
             <option value="">Все Категории</option>
-            <!-- Options populated by JS -->
         </select>
-        <!-- Search Bar -->
         <input type="text" id="searchBar" placeholder="🔍 Начните вводить название напитка для поиска..." 
-               class="w-full sm:w-2/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-gray-300 placeholder-gray-500">
+                class="w-full sm:w-2/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-gray-300 placeholder-gray-500">
     </div>
 
-    <!-- Loading/Error Indicator --><div id="statusIndicator" class="text-center p-8">
+    <div id="statusIndicator" class="text-center p-8">
         <div id="loadingIndicator" class="flex flex-col items-center">
             <div class="spinner"></div>
             <p class="mt-4 text-gray-600">Загружаем данные...</p>
         </div>
     </div>
     
-    <!-- Recipe Grid -->
     <div id="cardGrid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
-        <!-- Cards will be injected here -->
     </div>
     
-    <!-- Modal for Detailed View (using <dialog> element) -->
     <dialog id="recipeModal" class="p-0 rounded-2xl metal-effect w-11/12 max-w-2xl lg:max-w-3xl mx-auto overflow-hidden">
-        <div class="p-6 sm:p-8 bg-white/20 max-h-[90vh] overflow-y-auto"> <!-- Фон внутри модального окна --><div class="flex justify-between items-start mb-6">
-                <!-- Название в модальном окне - темный текст с белой тенью --><h2 id="modalName" class="text-3xl font-extrabold text-gray-700 drop-shadow-md" style="text-shadow: 0 0 5px #FFFFFF;"></h2>
-                <!-- Кнопка закрытия - нейтральный цвет --><button onclick="document.getElementById('recipeModal').close()" 
+        <div class="p-6 sm:p-8 bg-white/20 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-6">
+                <h2 id="modalName" class="text-3xl font-extrabold text-gray-700 drop-shadow-md" style="text-shadow: 0 0 5px #FFFFFF;"></h2>
+                <button onclick="document.getElementById('recipeModal').close()" 
                         class="text-gray-600 text-opacity-70 hover:text-opacity-100 transition-colors text-2xl font-bold p-2 metal-effect rounded-full w-10 h-10 flex items-center justify-center">
                     &times;
                 </button>
@@ -105,28 +114,22 @@
             
             <div class="flex flex-col lg:flex-row gap-6">
                 
-                <!-- Image & Volume (Левая колонка на десктопе) --><div class="lg:w-1/3 flex flex-col items-center p-4 metal-effect flex-shrink-0">
-                    
-                    <!-- Объем --><p id="modalVolume" class="text-lg text-gray-700 font-semibold mb-3"></p> 
-                    
-                    <!-- Фото --><!-- Рамка фото на нейтрально-серую --><img id="modalImage" src="" alt="Фото напитка" 
+                <div class="lg:w-1/3 flex flex-col items-center p-4 metal-effect flex-shrink-0">
+                    <p id="modalVolume" class="text-lg text-gray-700 font-semibold mb-3"></p> 
+                    <img id="modalImage" src="" alt="Фото напитка" 
                         class="rounded-lg object-contain w-full h-auto max-h-[70vh] border-2 border-gray-300/50" 
                         onerror="this.onerror=null; this.src='https://placehold.co/300x400/FFFFFF/666666?text=Нет+Фото'; this.classList.add('p-8');" />
                 </div>
                 
-                <!-- Ingredients & Recipe (Правая колонка на десктопе) --><div class="lg:w-2/3 space-y-6">
-                    <!-- Ingredients -->
+                <div class="lg:w-2/3 space-y-6">
                     <div class="p-4 metal-effect">
-                        <!-- Разделитель на нейтральный --><h3 class="text-xl font-semibold text-gray-700 mb-3 border-b pb-2 border-gray-300/50">Ингредиенты:</h3>
-                        <!-- Используем <ul> (list-none) для сохранения ручной нумерации -->
-                        <ul id="modalIngredientsList" class="space-y-2 text-gray-700 pl-4 list-none"></ul>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b pb-2 border-gray-300/50">Ингредиенты:</h3>
+                        <ul id="modalIngredientsList" class="space-y-2 text-gray-700"></ul>
                     </div>
                     
-                    <!-- Recipe -->
                     <div class="p-4 metal-effect">
-                        <!-- Разделитель на нейтральный --><h3 class="text-xl font-semibold text-gray-700 mb-3 border-b pb-2 border-gray-300/50">Технология Приготовления:</h3>
-                        <!-- ИЗМЕНЕНИЕ: Используем <ul> (list-none) для сохранения ручной нумерации -->
-                        <ul id="modalStepsList" class="space-y-3 text-gray-700 pl-4 list-none"></ul>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b pb-2 border-gray-300/50">Технология Приготовления:</h3>
+                        <ul id="modalStepsList" class="space-y-3 text-gray-700"></ul>
                     </div>
                 </div>
             </div>
@@ -134,97 +137,91 @@
     </dialog>
 
     <script>
-        // !!! 🛑 ВАЖНО: АДРЕС ВАШЕЙ ОПУБЛИКОВАННОЙ GOOGLE SHEETS ТАБЛИЦЫ В ФОРМАТЕ CSV !!! 🛑
-        // 🚨 ВАША ССЫЛКА НА CSV-ТАБЛИЦУ УСПЕШНО ВСТАВЛЕНА СЮДА:
-        // ----------------------------------------------------------------------------------
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ukbh5K5GdykFFCDj-H0xUODUAneKWmbeJFfe4tLTCMEWKJgCkefhrCOtsKDB_QRRYySAvI1xOTh3/pub?gid=1617440067&single=true&output=csv";
-        // ----------------------------------------------------------------------------------
-
-        let drinkData = [];
-        let rawCsvText = ''; 
+        
+        let allCardData = [];
+        const cardDataMap = new Map();
+        
+        let rawCsvText = '';
         
         const cardGrid = document.getElementById('cardGrid');
         const searchBar = document.getElementById('searchBar');
         const statusIndicator = document.getElementById('statusIndicator');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const recipeModal = document.getElementById('recipeModal');
-        const categoryFilter = document.getElementById('categoryFilter'); // NEW: Category filter element
+        const categoryFilter = document.getElementById('categoryFilter');
 
-        // --- ВРЕМЕННЫЕ ДАННЫЕ ДЛЯ ДЕМОНСТРАЦИИ (FALLBACK) ---
         const sampleData = [
             {
                 'название': 'Напиток Кактус-Жасмин',
                 'объём': '350',
-                'категория': 'Авторские Лимонады', // NEW
-                'состав': '1. ПФ Кактус-Каламанси - 100мл\n2. ПФ Чай Жасмин - 0,50мл\n3. т. Газ Вода - 0,50мл\nЛёд', 
+                'категория': 'Авторские Лимонады',
+                'состав': '1. ПФ Кактус-Каламанси - 100мл\n2. ПФ Чай Жасмин - 0,50мл\n3. Газ Вода - 0,50мл\n4. Лёд', 
                 'рецепт': '1. Смешайте все компоненты, кроме льда.\n2. Перелейте в бокал, наполненный льдом.\n3. Вставьте трубочку.', 
                 'фото': 'https://placehold.co/400x600/FFFFFF/666666?text=Напиток+(Демо)' 
             },
             {
+                'название': 'ПФ Кактус-Каламанси',
+                'объём': '1000',
+                'категория': 'Полуфабрикаты',
+                'состав': '1. Пюре Кактус - 500гр\n2. Сок Каламанси - 500гр',
+                'рецепт': '1. Смешать до однородной массы.',
+                'фото': 'https://placehold.co/400x300/FFFFFF/666666?text=ПФ+(Демо)' 
+            },
+            {
+                'название': 'Лёд',
+                'объём': '-',
+                'категория': 'Технические',
+                'состав': 'Вода',
+                'рецепт': '1. Заморозить в ледогенераторе.',
+                'фото': '' 
+            },
+            {
                 'название': 'Флэт Уайт',
                 'объём': '180',
-                'категория': 'Кофе', // NEW
+                'категория': 'Кофе',
                 'состав': '1. Двойной Ристретто - 40 мл;2. Молоко 3.2% - 140 мл', 
                 'рецепт': '1. Приготовьте двойной ристретто;2. Взбейте молоко;3. Влейте молоко.', 
                 'фото': 'https://placehold.co/400x300/FFFFFF/666666?text=Флэт+Уайт+(Демо)' 
-            },
-            {
-                'название': 'Чай Облепиховый',
-                'объём': '400',
-                'категория': 'Чаи', // NEW
-                'состав': '1. Пюре облепиховое - 60 гр\n2. Мед - 20 гр\n3. Кипяток - 320 мл\n4. Лимон - 1 долька',
-                'рецепт': '1. Положите пюре и мед.\n2. Залейте кипятком.\n3. Настаивайте 5 минут.\n4. Подавайте с лимоном.',
-                'фото': 'https://placehold.co/400x800/FFFFFF/666666?text=Чай+(Демо)' 
             }
         ];
-        // -------------------------------------------------------------------
 
-        // --- НОВЫЙ Более надежный парсер CSV-строки с учетом кавычек ---
         function splitCsvLine(line, delimiter) {
             const result = [];
             let current = '';
             let inQuotes = false;
             
-            // Итерируем по символам, чтобы корректно учесть кавышки
             for (let i = 0; i < line.length; i++) {
                 const char = line[i];
                 
                 if (char === '"') {
-                    // Если это экранированная кавышка внутри поля ("" -> ")
-                    if (i > 0 && line[i-1] === '"' && inQuotes) {
-                         // Пропускаем, так как она будет обработана ниже
+                    if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                        continue;
                     }
                     inQuotes = !inQuotes;
                 } else if (char === delimiter && !inQuotes) {
-                    // Найден разделитель ВНЕ кавычек
                     result.push(current);
                     current = '';
                     continue; 
                 }
                 current += char;
             }
-            // Добавляем последнее поле
             result.push(current);
             
-            // Постобработка: очистка от внешних кавычек и экранированных кавычек
             return result.map(field => {
-                let cleanField = field.trim().replace(/\r/g, ''); // Удаляем возврат каретки
+                let cleanField = field.trim().replace(/\r/g, '');
 
-                // Удаляем внешние кавычки, если они есть
                 if (cleanField.startsWith('"') && cleanField.endsWith('"')) {
                     cleanField = cleanField.substring(1, cleanField.length - 1);
                 }
                 
-                // Заменяем две кавычки внутри поля на одну (стандартное CSV-экранирование)
                 return cleanField.replace(/""/g, '"');
             });
         }
         
-        // --- CSV Parsing Logic (Detects column delimiter) ---
-
         function csvToObjectArray(csvText) {
-            
-            // 1. Разделение строк и удаление пустых
             const lines = csvText.split('\n').filter(line => line.trim() !== '');
             if (lines.length < 2) {
                 console.error("Ошибка: В файле CSV меньше двух строк (заголовки + данные).");
@@ -232,61 +229,45 @@
             }
 
             const rawHeaders = lines[0].replace(/^\ufeff/, '').trim();
-            // 2. Определение разделителя с учетом запроса пользователя (приоритет ;)
             const commaCount = rawHeaders.split(',').length;
             const semicolonCount = rawHeaders.split(';').length;
             const pipeCount = rawHeaders.split('|').length; 
 
             let columnDelimiter;
             if (semicolonCount > commaCount && semicolonCount >= pipeCount) {
-                // ПРИОРИТЕТ: Точка с запятой, как просил пользователь
                 columnDelimiter = ';'; 
             } else if (commaCount > semicolonCount && commaCount >= pipeCount) {
-                columnDelimiter = ','; // Запятая
+                columnDelimiter = ','; 
             } else if (pipeCount > commaCount && pipeCount > semicolonCount) {
-                columnDelimiter = '|'; // Вертикальная черта
+                columnDelimiter = '|'; 
             } else {
-                columnDelimiter = ','; // По умолчанию Запятая
+                columnDelimiter = ',';
             }
             
-            // 3. Обработка заголовков (используем новый парсер)
             const headerValues = splitCsvLine(rawHeaders, columnDelimiter);
-            const headers = headerValues.map(header => header.toLowerCase());
+            const headers = headerValues.map(header => header.toLowerCase().trim());
             
-            console.log("Определен разделитель колонок:", columnDelimiter); 
-            console.log("Обработанные заголовки:", headers); 
-            
-            // 4. Критическая проверка обязательных заголовков
             const requiredHeaders = ['название', 'состав', 'рецепт', 'объём', 'фото'];
             const missingCriticalHeaders = requiredHeaders.filter(h => !headers.includes(h));
             
             if (missingCriticalHeaders.length > 0) {
-                console.error(`Критическая ошибка: В CSV отсутствуют обязательные заголовки: ${missingCriticalHeaders.join(', ')}. Проверьте первую строку таблицы.`);
                 document.getElementById('statusIndicator').innerHTML = `
                     <div class='text-center p-10 metal-effect mt-8'>
                         <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">КРИТИЧЕСКАЯ ОШИБКА: Заголовки</p>
                         <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Не найдены обязательные колонки: <b>${missingCriticalHeaders.join(', ')}</b>.</p>
-                        <p class="text-sm text-gray-600 drop-shadow-sm">Убедитесь, что в первой строке таблицы точно указаны: название, состав, рецепт, объём, фото. Колонка 'категория' желательна, но не критична.</p>
+                        <p class="text-sm text-gray-600 drop-shadow-sm">Убедитесь, что в первой строке таблицы точно указаны: название, состав, рецепт, объём, фото.</p>
                     </div>
                 `;
                 return [];
             }
             
             const data = [];
-
-            // Дополнительная проверка на наличие колонки "категория"
             const categoryIndex = headers.indexOf('категория');
-            if (categoryIndex === -1) {
-                console.warn("ВНИМАНИЕ: Колонка 'категория' не найдена. Напитки будут отображаться как 'Без Категории'.");
-            }
 
-            // 5. Обработка данных
             for (let i = 1; i < lines.length; i++) {
-                // Используем новый, надежный парсер
                 const values = splitCsvLine(lines[i], columnDelimiter);
                 
                 if (values.length !== headers.length) {
-                    // Это может быть пустая строка или строка с ошибкой. Пропускаем.
                     continue; 
                 }
 
@@ -295,7 +276,6 @@
                     obj[header] = values[index];
                 });
                 
-                // Если колонка 'категория' не найдена в CSV, добавляем значение по умолчанию.
                 if (categoryIndex === -1) {
                     obj['категория'] = 'Без Категории';
                 }
@@ -305,16 +285,12 @@
                 }
             }
             
-            console.log("Количество загруженных напитков:", data.length); 
             return data;
         }
 
-        // --- Rendering Functions ---
-
         function renderGrid(data) {
             cardGrid.innerHTML = '';
-            // Удаляем индикатор статуса, только если есть данные
-            if (data !== sampleData) {
+            if (data !== sampleData && !statusIndicator.innerHTML.includes("демонстрационные данные")) {
                 statusIndicator.innerHTML = ''; 
             }
             
@@ -325,7 +301,6 @@
 
             data.forEach((card, index) => {
                 const cardElement = document.createElement('div');
-                // Стили карточки: стеклянный эффект с нейтральным наведением
                 cardElement.className = "metal-effect p-4 overflow-hidden hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer flex flex-col items-center text-center hover:border-gray-300";
                 cardElement.dataset.index = index; 
 
@@ -334,8 +309,8 @@
                             alt="${card['название']}" 
                             class="w-full h-32 object-cover rounded-lg mb-3 border-2 border-gray-200"
                             onerror="this.onerror=null; this.src='https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'; this.classList.add('p-4');" />
-                    <!-- Цвет текста заголовка на нейтрально-темный --><h3 class="text-lg font-semibold text-gray-700 drop-shadow-sm truncate w-full">${card['название'] || 'Без названия'}</h3>
-                    <!-- Отображение категории --><p class="text-xs text-gray-500 mt-1 mb-1">${card['категория'] || 'Без Категории'}</p>
+                    <h3 class="text-lg font-semibold text-gray-700 drop-shadow-sm truncate w-full">${card['название'] || 'Без названия'}</h3>
+                    <p class="text-xs text-gray-500 mt-1 mb-1">${card['категория'] || 'Без Категории'}</p>
                     <p class="text-sm text-gray-600 drop-shadow-sm">${card['объём'] || '?'} мл</p>
                 `;
                 
@@ -352,18 +327,76 @@
 
             const ingredientsListEl = document.getElementById('modalIngredientsList');
             ingredientsListEl.innerHTML = '';
+            
             // Разбиваем ингредиенты по точке с запятой ИЛИ по новой строке.
             const ingredients = card['состав'] ? card['состав'].split(/[;\r?\n]+/).filter(item => item.trim() !== '') : [];
             
-            // Ручная нумерация для "СОСТАВА"
+            const currentCardNameLower = (card['название'] || '').toLowerCase().trim();
+
             ingredients.forEach(item => {
                 const cleanItem = item.trim(); 
-                if (cleanItem) {
-                    const li = document.createElement('li');
-                    li.textContent = cleanItem; 
-                    li.className = "text-gray-700"; 
-                    ingredientsListEl.appendChild(li);
+                if (!cleanItem) return;
+
+                const li = document.createElement('li');
+                li.className = "text-gray-700";
+
+                // Улучшенное Регулярное выражение:
+                // [1]: ([\d.]+\s*)? - Префикс (нумерация + пробел, опционально)
+                // [2]: ([^:;-]+) - Название ингредиента (любой текст до первого разделителя :;- )
+                // [3]: ([:;-].*)? - Суффикс (разделитель + остаток строки, опционально)
+                // Мы используем [^:;-]+ чтобы захватить как можно больше текста, который может быть названием.
+                const match = cleanItem.match(/^([\d.]+\s*)?([^:;-]+)([:;-].*)?$/); 
+
+                let prefix = '';
+                let ingredientName = cleanItem;
+                let suffix = '';
+                
+                if (match) {
+                    prefix = match[1] || '';
+                    // match[2] - это название, но мы должны убедиться, что оно не пустое
+                    ingredientName = match[2] ? match[2].trim() : cleanItem; 
+                    suffix = match[3] || '';
+                } 
+                
+                // В случае, если регулярное выражение не сработало или название пустое, используем полный текст
+                if (!match || !match[2]) {
+                    prefix = '';
+                    ingredientName = cleanItem;
+                    suffix = '';
                 }
+
+
+                const lowerIngredientName = ingredientName.toLowerCase().trim();
+
+                // Проверяем, есть ли карточка для этого ингредиента И это не текущая карточка
+                if (cardDataMap.has(lowerIngredientName) && lowerIngredientName !== currentCardNameLower) {
+                    
+                    // 1. Добавляем префикс (номер)
+                    if (prefix) {
+                        li.appendChild(document.createTextNode(prefix));
+                    }
+
+                    // 2. Создаем и добавляем кнопку (Название)
+                    const button = document.createElement('button');
+                    button.className = 'ingredient-button';
+                    button.textContent = ingredientName;
+                    button.onclick = (e) => {
+                        e.stopPropagation(); // Предотвращаем закрытие модального окна, если вдруг кликнет вне кнопки
+                        showLinkedCard(lowerIngredientName);
+                    };
+                    li.appendChild(button);
+
+                    // 3. Добавляем суффикс (количество)
+                    if (suffix) {
+                        li.appendChild(document.createTextNode(suffix));
+                    }
+
+                } else {
+                    // Это просто текст (не связанный ингредиент или сам напиток)
+                    li.textContent = cleanItem; 
+                }
+                
+                ingredientsListEl.appendChild(li);
             });
 
             const stepsListEl = document.getElementById('modalStepsList');
@@ -371,12 +404,11 @@
             // Разбиваем шаги по точке с запятой ИЛИ по новой строке.
             const steps = card['рецепт'] ? card['рецепт'].split(/[;\r?\n]+/).filter(step => step.trim() !== '') : [];
             
-            // Ручная нумерация для "РЕЦЕПТА"
             steps.forEach(step => {
                 const cleanStep = step.trim(); 
                 if (cleanStep) {
                     const li = document.createElement('li');
-                    li.textContent = cleanStep; // Отображаем текст точно как в CSV
+                    li.textContent = cleanStep;
                     li.className = "text-gray-700"; 
                     stepsListEl.appendChild(li);
                 }
@@ -385,49 +417,46 @@
             recipeModal.showModal();
         }
 
-        // --- Search/Filtering Logic ---
+        function showLinkedCard(nameKey) {
+            const card = cardDataMap.get(nameKey);
+            if (card) {
+                openModal(card);
+            }
+        }
+
         function filterDrinks() {
             const textQuery = searchBar.value.toLowerCase().trim();
-            // NEW: Получаем выбранную категорию
             const selectedCategory = categoryFilter.value; 
 
-            const filtered = drinkData.filter(card => {
+            const filtered = allCardData.filter(card => {
                 const name = card['название'] ? card['название'].toLowerCase() : '';
-                // NEW: Получаем категорию напитка (если нет, используем "Без Категории")
                 const cardCategory = card['категория'] ? card['категория'].trim() : 'Без Категории'; 
 
-                // 1. Проверка по текстовому поиску
                 const matchesText = !textQuery || name.includes(textQuery);
-                
-                // 2. Проверка по категории (если selectedCategory пуст, значит выбраны 'Все Категории' и условие true)
                 const matchesCategory = !selectedCategory || cardCategory === selectedCategory; 
                 
-                return matchesText && matchesCategory; // Должны совпадать оба условия
+                return matchesText && matchesCategory;
             });
             
             renderGrid(filtered);
         }
 
-        // NEW: Функция для заполнения выпадающего списка категорий
         function populateCategoryFilter(data) {
             const categories = new Set();
             data.forEach(drink => {
-                // Используем значение по умолчанию, если категория отсутствует
                 const category = drink['категория'] ? drink['категория'].trim() : 'Без Категории';
                 if (category) {
                     categories.add(category);
                 }
             });
 
-            categoryFilter.innerHTML = ''; // Очищаем список
+            categoryFilter.innerHTML = '';
             
-            // 1. Опция по умолчанию (Все Категории)
             const defaultOption = document.createElement('option');
             defaultOption.value = '';
             defaultOption.textContent = 'Все Категории';
             categoryFilter.appendChild(defaultOption);
 
-            // 2. Добавление уникальных категорий
             const sortedCategories = Array.from(categories).sort();
             sortedCategories.forEach(category => {
                 const option = document.createElement('option');
@@ -437,11 +466,7 @@
             });
         }
 
-
-        // --- Core Fetching Logic with Retry (No changes to fetch) ---
-
         async function retryFetch(url, retries = 3, delay = 1000) {
-            // Если URL не был заменен, не пытаемся выполнить fetch
             if (url.includes("!!! ВСТАВЬТЕ СЮДА")) {
                 throw new Error("CSV_URL не заменен на вашу ссылку публикации.");
             }
@@ -459,14 +484,10 @@
                     if (i === retries - 1) {
                         throw new Error(`Критическая ошибка загрузки после ${retries} попыток. Проверьте сеть, URL и настройки публикации (Publish to web) таблицы Google.`);
                     }
-                    // Экспоненциальная задержка перед следующей попыткой
                     await new Promise(resolve => setTimeout(resolve, delay * (2 ** i)));
                 }
             }
         }
-
-
-        // --- Initialization ---
 
         async function loadData() {
             let fetchSuccess = false;
@@ -476,58 +497,63 @@
                     loadingIndicator.classList.remove('hidden');
                     const response = await retryFetch(CSV_URL); 
                     const csvText = await response.text();
-                    rawCsvText = csvText; // Сохраняем для отладки
+                    rawCsvText = csvText;
                     
-                    console.log("--- DEBUG: Первые 5 строк CSV ---");
-                    console.log(rawCsvText.split('\n').slice(0, 5).join('\n'));
-                    console.log("----------------------------------");
+                    allCardData = csvToObjectArray(csvText);
                     
-                    drinkData = csvToObjectArray(csvText);
-                    fetchSuccess = drinkData.length > 0;
+                    cardDataMap.clear();
+                    allCardData.forEach(card => {
+                        if (card['название']) {
+                            cardDataMap.set(card['название'].toLowerCase().trim(), card);
+                        }
+                    });
+                    
+                    fetchSuccess = cardDataMap.size > 0;
 
                 } catch (error) {
                     console.error("Критическая ошибка загрузки данных из CSV:", error);
-                    // ИЗМЕНЕНИЕ: Более подробное сообщение об ошибке с инструкциями
                     statusIndicator.innerHTML = `<div class='text-center p-10 metal-effect mt-8'>
-                                                 <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">⚠️ Ошибка Загрузки Данных (Проверьте URL)</p>
-                                                 <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Причина: <b>${error.message}</b></p>
-                                                 <p class="text-sm text-gray-600 drop-shadow-sm border-t border-gray-300 pt-3 break-all text-left">
-                                                      <b>ДЕЙСТВИЯ:</b><br>
-                                                      1. Убедитесь, что вы заменили <b>плейсхолдер</b> на вашу CSV-ссылку <b>в строке 76</b>.<br>
-                                                      2. Проверьте, что таблица <b>опубликована</b>: "Файл" -> "Поделиться" -> "Опубликовать в Интернете" (формат CSV).<br>
-                                                      ${!CSV_URL.includes("!!! ВСТАВЬТЕ СЮДА") ? `3. Используемая ссылка: <b>${CSV_URL}</b>` : ''}
-                                                 </p>
-                                             </div>`;
+                                                   <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">⚠️ Ошибка Загрузки Данных (Проверьте URL)</p>
+                                                   <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Причина: <b>${error.message}</b></p>
+                                                   <p class="text-sm text-gray-600 drop-shadow-sm border-t border-gray-300 pt-3 break-all text-left">
+                                                       <b>ДЕЙСТВИЯ:</b><br>
+                                                       1. Убедитесь, что вы заменили <b>плейсхолдер</b> на вашу CSV-ссылку <b>в строке 76</b>.<br>
+                                                       2. Проверьте, что таблица <b>опубликована</b>: "Файл" -> "Поделиться" -> "Опубликовать в Интернете" (формат CSV).<br>
+                                                       ${!CSV_URL.includes("!!! ВСТАВЬТЕ СЮДА") ? `3. Используемая ссылка: <b>${CSV_URL}</b>` : ''}
+                                                   </p>
+                                               </div>`;
                 }
             }
             
-            // FALLBACK: Если fetch не сработал, используем демо-данные
             if (!fetchSuccess) {
-                console.log("DEBUG: Загрузка демо-данных (fallback).");
-                drinkData = sampleData;
-                rawCsvText = ''; // Сбрасываем сырой текст
-                // Стиль сообщения о демо-данных на нейтральный
+                allCardData = sampleData;
+                rawCsvText = '';
+                
+                cardDataMap.clear();
+                allCardData.forEach(card => {
+                    if (card['название']) {
+                        cardDataMap.set(card['название'].toLowerCase().trim(), card);
+                    }
+                });
+
                 statusIndicator.innerHTML = (statusIndicator.innerHTML.includes("Ошибка Загрузки Данных")) ? statusIndicator.innerHTML + `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
-                                             ✅ Приложение переключилось на демонстрационные данные.
-                                           </p>` : `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
-                                             ✅ Используются демонстрационные данные (ошибка загрузки с CSV_URL).
-                                           </p>`;
+                                               ✅ Приложение переключилось на демонстрационные данные.
+                                             </p>` : `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
+                                               ✅ Используются демонстрационные данные (ошибка загрузки с CSV_URL).
+                                             </p>`;
             }
 
 
-            if (drinkData.length > 0) {
+            if (cardDataMap.size > 0) {
                 loadingIndicator.classList.add('hidden');
-                // Если сработал fallback, не затираем сообщение о нем
                 if (!statusIndicator.innerHTML.includes("демонстрационные данные")) {
-                     statusIndicator.innerHTML = ''; 
+                    statusIndicator.innerHTML = ''; 
                 }
                 
-                // NEW: Заполняем фильтр категорий
-                populateCategoryFilter(drinkData);
-
-                renderGrid(drinkData);
+                populateCategoryFilter(allCardData);
+                renderGrid(allCardData);
+                
                 searchBar.addEventListener('input', filterDrinks);
-                // NEW: Добавляем слушатель события для фильтра по категориям
                 categoryFilter.addEventListener('change', filterDrinks); 
 
             } else {
