@@ -388,6 +388,115 @@
             });
         }
         
+        // Вспомогательная функция для экранирования спецсимволов в регулярных выражениях
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // --- НОВАЯ ФУНКЦИЯ: Разбивает текст на части и превращает найденные названия карт в кнопки ---
+        function createLinkedIngredientElements(text) {
+            // Начальное состояние: один текстовый фрагмент
+            let parts = [{ text: text, card: null }];
+            
+            // Получаем все названия карт, сортируем от длинных к коротким
+            // Это важно, чтобы сначала находились более длинные названия (например "ПФ Сироп Клубника"), 
+            // а не их части ("Сироп" или "Клубника")
+            const sortedNames = Array.from(cardDataMap.keys())
+                                     .filter(name => name.length >= 3) // Игнорируем слишком короткие слова
+                                     .sort((a, b) => b.length - a.length);
+
+            for (const dbName of sortedNames) {
+                const newParts = [];
+                let hasChanges = false;
+
+                for (const part of parts) {
+                    // Если часть уже определена как ссылка, пропускаем её обработку
+                    if (part.card) {
+                        newParts.push(part);
+                        continue;
+                    }
+
+                    // Ищем вхождение названия карты (dbName) в текущем куске текста (part.text)
+                    // Флаг 'gi' - глобальный поиск, регистронезависимый
+                    const regex = new RegExp(`(${escapeRegExp(dbName)})`, 'gi');
+                    
+                    // split с группирующими скобками вернет массив, где разделитель (совпадение) тоже включен
+                    const splitArr = part.text.split(regex);
+                    
+                    if (splitArr.length > 1) {
+                        hasChanges = true;
+                        // Проходим по результату split
+                        for (let i = 0; i < splitArr.length; i++) {
+                            const chunk = splitArr[i];
+                            // Иногда split может вернуть пустую строку в начале или конце
+                            if (!chunk) continue;
+
+                            // Проверяем, является ли этот кусок нашим совпадением
+                            if (chunk.toLowerCase() === dbName) {
+                                newParts.push({ text: chunk, card: cardDataMap.get(dbName) });
+                            } else {
+                                newParts.push({ text: chunk, card: null });
+                            }
+                        }
+                    } else {
+                        // Если совпадений нет, оставляем кусок как есть
+                        newParts.push(part);
+                    }
+                }
+                parts = newParts;
+            }
+            
+            // Собираем HTML элементы из частей
+            const fragment = document.createDocumentFragment();
+            let foundAnyLink = false;
+
+            parts.forEach(part => {
+                if (part.card) {
+                    foundAnyLink = true;
+                    const btn = document.createElement('button');
+                    btn.className = 'ingredient-button';
+                    btn.textContent = part.text; // Сохраняем оригинальный регистр текста
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        openModal(part.card);
+                    };
+                    fragment.appendChild(btn);
+                } else {
+                    fragment.appendChild(document.createTextNode(part.text));
+                }
+            });
+
+            // FALLBACK: Если умный поиск не нашел ни одной ссылки внутри текста,
+            // проверяем "Обратный поиск" (старая логика):
+            // Вдруг название карты ОЧЕНЬ длинное и включает в себя этот ингредиент целиком.
+            // Пример: в рецепте написано "Сахар", а карта называется "Сахар (белый песок)".
+            if (!foundAnyLink) {
+                 const cleanName = text.toLowerCase().trim();
+                 for (const dbName of sortedNames) {
+                     if (dbName.includes(cleanName)) {
+                         // Нашли карту, которая включает в себя наш текст
+                         const card = cardDataMap.get(dbName);
+                         
+                         // Очищаем фрагмент
+                         while(fragment.firstChild) fragment.removeChild(fragment.firstChild);
+                         
+                         // Создаем одну большую кнопку на весь текст
+                         const btn = document.createElement('button');
+                         btn.className = 'ingredient-button';
+                         btn.textContent = text; 
+                         btn.onclick = (e) => {
+                            e.stopPropagation();
+                            openModal(card);
+                         };
+                         fragment.appendChild(btn);
+                         return fragment;
+                     }
+                 }
+            }
+
+            return fragment;
+        }
+
         function openModal(card) {
             document.getElementById('modalName').textContent = card['название'] || 'Без названия';
             document.getElementById('modalVolume').textContent = `Объем: ${card['объём'] || '?'} мл`; 
@@ -408,7 +517,7 @@
                 const li = document.createElement('li');
                 li.className = "text-gray-700";
 
-                // Улучшенный парсинг для поиска названия ингредиента
+                // Парсинг для отделения количества от названия (например "1. Название - 100мл")
                 const match = cleanItem.match(/^([\d.,\s\w]+\s*)?([^:;-]+)([:;-].*)?$/); 
 
                 let prefix = '';
@@ -416,43 +525,24 @@
                 let suffix = '';
                 
                 if (match) {
-                    // Группа 1: Количество и Ед. изм.
                     prefix = match[1] || '';
-                    // Группа 2: Название (до разделителя или конца строки)
                     ingredientName = match[2] ? match[2].trim() : cleanItem; 
-                    // Группа 3: Разделитель и остаток
                     suffix = match[3] || '';
                 } 
                 
-                if (!match || !match[2]) {
-                    prefix = '';
-                    ingredientName = cleanItem;
-                    suffix = '';
+                // --- ИЗМЕНЕНИЕ: Теперь мы не просто ищем одну карту, а генерируем структуру ---
+                // --- которая может содержать несколько кнопок в одной строке ---
+                
+                if (prefix) {
+                    li.appendChild(document.createTextNode(prefix));
                 }
 
-                const lowerIngredientName = ingredientName.toLowerCase().trim();
+                // Вставляем сгенерированные кнопки/текст
+                const contentFragment = createLinkedIngredientElements(ingredientName);
+                li.appendChild(contentFragment);
 
-                if (cardDataMap.has(lowerIngredientName) && lowerIngredientName !== currentCardNameLower) {
-                    
-                    if (prefix) {
-                        li.appendChild(document.createTextNode(prefix));
-                    }
-
-                    const button = document.createElement('button');
-                    button.className = 'ingredient-button';
-                    button.textContent = ingredientName;
-                    button.onclick = (e) => {
-                        e.stopPropagation(); 
-                        showLinkedCard(lowerIngredientName);
-                    };
-                    li.appendChild(button);
-
-                    if (suffix) {
-                        li.appendChild(document.createTextNode(suffix));
-                    }
-
-                } else {
-                    li.textContent = cleanItem; 
+                if (suffix) {
+                    li.appendChild(document.createTextNode(suffix));
                 }
                 
                 ingredientsListEl.appendChild(li);
@@ -629,4 +719,3 @@
     </script>
 </body>
 </html>
-
