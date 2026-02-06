@@ -37,6 +37,10 @@
                 0 0 20px rgba(167, 215, 249, 0.8) inset; /* Более сильное внутреннее свечение */
             transform: translateY(-2px) scale(1.01); /* Немного поднимается и чуть увеличивается */
         }
+        
+        .metal-effect:active {
+             transform: translateY(0) scale(0.98);
+        }
 
         /* --- Специфический эффект для карточек в сетке --- */
         .card-item:hover {
@@ -154,6 +158,16 @@
             color: white;
             transform: translateX(-3px); /* Анимация движения влево */
         }
+        
+        /* Спец стиль для заметок в рецепте */
+        .recipe-note {
+            color: #666;
+            font-style: italic;
+            font-size: 0.95em;
+            margin-top: -0.25rem;
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8">
@@ -163,12 +177,25 @@
         <p class="text-gray-500 mt-2">Интерактивный каталог с переходами между составными частями.</p>
     </header>
 
-    <div class="flex flex-col sm:flex-row justify-center mb-8 gap-4 max-w-xl mx-auto">
-        <select id="categoryFilter" class="sm:w-1/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300">
+    <!-- Панель управления: Фильтр, Поиск и Кнопка Обновить -->
+    <div class="flex flex-col sm:flex-row justify-center items-center mb-4 gap-4 max-w-3xl mx-auto">
+        <select id="categoryFilter" class="w-full sm:w-1/4 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300">
             <option value="">Все Категории</option>
         </select>
-        <input type="text" id="searchBar" placeholder="🔍 Начните вводить название напитка для поиска..." 
-                class="w-full sm:w-2/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300 placeholder-gray-500">
+        
+        <input type="text" id="searchBar" placeholder="🔍 Поиск..." 
+               class="w-full sm:w-2/4 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300 placeholder-gray-500">
+               
+        <div class="flex items-center gap-2">
+            <button onclick="loadData()" title="Обновить данные из таблицы"
+                    class="p-4 text-lg metal-effect font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center">
+                <span>🔄</span>
+            </button>
+        </div>
+    </div>
+    <!-- Счетчик -->
+    <div class="text-center mb-8 text-sm text-gray-500">
+        <span id="itemsCount">Загрузка...</span>
     </div>
 
     <div id="statusIndicator" class="text-center p-8">
@@ -244,6 +271,7 @@
         const recipeModal = document.getElementById('recipeModal');
         const categoryFilter = document.getElementById('categoryFilter');
         const modalBackButton = document.getElementById('modalBackButton');
+        const itemsCountLabel = document.getElementById('itemsCount');
 
         const sampleData = [
             {
@@ -280,66 +308,140 @@
             }
         ];
 
-        function splitCsvLine(line, delimiter) {
-            const result = [];
-            let current = '';
+        // --- НОВЫЙ МОЩНЫЙ CSV ПАРСЕР ---
+        // Умеет читать переносы строк внутри ячеек (Alt+Enter в Excel/Google)
+        function parseCSVRobust(text, delimiter = ',') {
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
             let inQuotes = false;
             
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
                 
                 if (char === '"') {
-                    if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
-                        current += '"';
-                        i++;
-                        continue;
+                    if (inQuotes && nextChar === '"') {
+                        // Экранированная кавычка: "" -> "
+                        currentField += '"';
+                        i++; 
+                    } else {
+                        // Переключение режима кавычек
+                        inQuotes = !inQuotes;
                     }
-                    inQuotes = !inQuotes;
                 } else if (char === delimiter && !inQuotes) {
-                    result.push(current);
-                    current = '';
-                    continue; 
+                    // Конец поля
+                    currentRow.push(currentField);
+                    currentField = '';
+                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    // Конец строки (если не внутри кавычек)
+                    if (char === '\r' && nextChar === '\n') {
+                        i++; // Пропускаем \n при \r\n
+                    }
+                    currentRow.push(currentField);
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentField = '';
+                } else {
+                    currentField += char;
                 }
-                current += char;
             }
-            result.push(current);
             
-            return result.map(field => {
-                let cleanField = field.trim().replace(/\r/g, '');
+            // Добавляем последнюю строку, если она есть
+            if (currentField || currentRow.length > 0) {
+                currentRow.push(currentField);
+                rows.push(currentRow);
+            }
+            
+            return rows;
+        }
 
-                if (cleanField.startsWith('"') && cleanField.endsWith('"')) {
-                    cleanField = cleanField.substring(1, cleanField.length - 1);
-                }
+        // --- Умный парсер для состава (Ингредиенты + Объем) ---
+        function parseSmartIngredients(rawIngredients, currentVolume) {
+            if (!rawIngredients) return { cleanIngredients: '', extractedVolume: currentVolume };
+
+            let volume = currentVolume;
+            // Улучшенный поиск объема (поддерживает дробные числа, например 0,5 или 1.5)
+            const volumeMatch = rawIngredients.match(/(?:Объем|Объём).*?(\d+(?:[.,]\d+)?)\s*(?:мл|гр|g|l|л)?/i);
+            
+            if (volumeMatch && volumeMatch[1]) {
+                volume = volumeMatch[1];
+            }
+
+            // Убираем строку с объемом из ингредиентов
+            let cleanText = rawIngredients.replace(/(?:Объем|Объём).*?(\d+(?:[.,]\d+)?).*$/gmi, '');
+
+            let lines = cleanText.split(/[\n;]+/);
+            
+            let processedLines = lines.map(line => {
+                let l = line.trim();
+                if (!l) return null;
+
+                // Исправляем: "1Ингредиент" -> "1. Ингредиент"
+                l = l.replace(/^(\d+)([а-яА-Яa-zA-Z])/u, '$1. $2');
+
+                // --- ОБНОВЛЕННЫЙ РЕГУЛЯР ---
+                // Исправляем единицы измерения, учитывая возможные пробелы.
+                // Было: "Молокомл50" -> "Молоко - 50мл"
+                // Стало: "Молоко мл 50" -> "Молоко - 50мл", "ФК гр 90" -> "ФК - 90гр"
+                // \s* означает "любое количество пробелов (или их отсутствие)"
+                l = l.replace(/([а-яА-Яa-zA-Z])\s*(гр|г|мл|л|gr|g|ml|l)\.?\s*(\d+(?:[.,]\d+)?)/giu, '$1 - $3$2');
                 
-                return cleanField.replace(/""/g, '"');
-            });
+                return l;
+            }).filter(l => l); 
+
+            return {
+                cleanIngredients: processedLines.join('; '), 
+                extractedVolume: volume
+            };
+        }
+
+        // --- НОВАЯ ФУНКЦИЯ: Умный парсер для рецепта ---
+        function parseSmartRecipe(rawRecipe) {
+            if (!rawRecipe) return '';
+            
+            // Разбиваем по переносам строк или точке с запятой
+            let lines = rawRecipe.split(/[\n;]+/);
+            
+            let processedLines = lines.map(line => {
+                let l = line.trim();
+                if (!l) return null;
+                
+                // Исправляем "1.Текст" -> "1. Текст"
+                l = l.replace(/^(\d+)\.([^\s])/u, '$1. $2');
+                
+                // Исправляем "1Текст" -> "1. Текст" (если это начало строки и одна цифра)
+                l = l.replace(/^(\d)([а-яА-Яa-zA-Z])/u, '$1. $2');
+
+                return l;
+            }).filter(l => l);
+
+            return processedLines.join('\n');
         }
         
         function csvToObjectArray(csvText) {
-            const lines = csvText.split('\n').filter(line => line.trim() !== '');
-            if (lines.length < 2) {
+            // 1. Пытаемся определить разделитель по первой строке
+            const firstLineEnd = csvText.indexOf('\n');
+            const firstLine = csvText.substring(0, firstLineEnd > -1 ? firstLineEnd : csvText.length);
+            
+            let delimiter = ',';
+            if ((firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length) {
+                delimiter = ';';
+            } else if ((firstLine.match(/\|/g) || []).length > (firstLine.match(/,/g) || []).length) {
+                delimiter = '|';
+            }
+
+            // 2. Используем надежный парсер
+            const rows = parseCSVRobust(csvText, delimiter);
+
+            if (rows.length < 2) {
                 console.error("Ошибка: В файле CSV меньше двух строк (заголовки + данные).");
                 return [];
             }
-
-            const rawHeaders = lines[0].replace(/^\ufeff/, '').trim();
-            const commaCount = rawHeaders.split(',').length;
-            const semicolonCount = rawHeaders.split(';').length;
-            const pipeCount = rawHeaders.split('|').length; 
-
-            let columnDelimiter;
-            if (semicolonCount > commaCount && semicolonCount >= pipeCount) {
-                columnDelimiter = ';'; 
-            } else if (commaCount > semicolonCount && commaCount >= pipeCount) {
-                columnDelimiter = ','; 
-            } else if (pipeCount > commaCount && pipeCount > semicolonCount) {
-                columnDelimiter = '|'; 
-            } else {
-                columnDelimiter = ',';
-            }
             
-            const headerValues = splitCsvLine(rawHeaders, columnDelimiter);
-            const headers = headerValues.map(header => header.toLowerCase().trim());
+            // 3. Обрабатываем заголовки
+            const rawHeaders = rows[0];
+            const headers = rawHeaders.map(h => h.toLowerCase().trim().replace(/^\ufeff/, ''));
             
             const requiredHeaders = ['название', 'состав', 'рецепт', 'объём', 'фото'];
             const missingCriticalHeaders = requiredHeaders.filter(h => !headers.includes(h));
@@ -358,16 +460,16 @@
             const data = [];
             const categoryIndex = headers.indexOf('категория');
 
-            for (let i = 1; i < lines.length; i++) {
-                const values = splitCsvLine(lines[i], columnDelimiter);
+            // 4. Проходимся по данным
+            for (let i = 1; i < rows.length; i++) {
+                const values = rows[i];
                 
-                if (values.length !== headers.length) {
-                    continue; 
-                }
+                // Пропускаем пустые строки
+                if (values.length === 0 || (values.length === 1 && values[0] === '')) continue;
 
                 const obj = {};
                 headers.forEach((header, index) => {
-                    obj[header] = values[index];
+                    obj[header] = (index < values.length) ? values[index].trim() : "";
                 });
                 
                 if (categoryIndex === -1) {
@@ -375,6 +477,17 @@
                 }
 
                 if (obj['название'] && obj['название'].trim() !== '') {
+                    // --- ПРИМЕНЯЕМ УМНЫЕ ПАРСЕРЫ ---
+                    
+                    const smartIngredients = parseSmartIngredients(obj['состав'], obj['объём']);
+                    obj['состав'] = smartIngredients.cleanIngredients;
+                    if ((!obj['объём'] || obj['объём'].trim() === '' || obj['объём'] === '-') && smartIngredients.extractedVolume) {
+                        obj['объём'] = smartIngredients.extractedVolume;
+                    }
+                    
+                    obj['рецепт'] = parseSmartRecipe(obj['рецепт']);
+                    // ------------------------------------
+
                     data.push(obj);
                 }
             }
@@ -390,8 +503,11 @@
             
             if (data.length === 0) {
                 statusIndicator.innerHTML = "<p class='text-gray-600 font-medium'>Ничего не найдено. Попробуйте другой поисковый запрос.</p>";
+                itemsCountLabel.textContent = "Найдено: 0";
                 return;
             }
+            
+            itemsCountLabel.textContent = `Показано карт: ${data.length}`;
 
             data.forEach((card, index) => {
                 const cardElement = document.createElement('div');
@@ -415,7 +531,6 @@
                 `;
                 
                 cardElement.addEventListener('click', () => {
-                    // При открытии из сетки очищаем историю
                     modalHistory = [];
                     openModal(card);
                 });
@@ -427,13 +542,12 @@
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
-        // --- Функция для создания кнопок внутри текста ингредиентов ---
         function createLinkedIngredientElements(text) {
             let parts = [{ text: text, card: null }];
             
             const sortedNames = Array.from(cardDataMap.keys())
-                                     .filter(name => name.length >= 3) 
-                                     .sort((a, b) => b.length - a.length);
+                                            .filter(name => name.length >= 3) 
+                                            .sort((a, b) => b.length - a.length);
 
             for (const dbName of sortedNames) {
                 const newParts = [];
@@ -476,7 +590,6 @@
                     btn.textContent = part.text; 
                     btn.onclick = (e) => {
                         e.stopPropagation();
-                        // --- ВАЖНО: При клике на ссылку добавляем текущую карту в историю ---
                         if (currentModalCard) {
                             modalHistory.push(currentModalCard);
                         }
@@ -500,7 +613,6 @@
                          btn.textContent = text; 
                          btn.onclick = (e) => {
                             e.stopPropagation();
-                            // --- ВАЖНО: При клике на ссылку добавляем текущую карту в историю ---
                             if (currentModalCard) {
                                 modalHistory.push(currentModalCard);
                             }
@@ -515,20 +627,16 @@
             return fragment;
         }
 
-        // --- Функция возврата назад ---
         function goBack() {
             if (modalHistory.length > 0) {
                 const prevCard = modalHistory.pop();
-                // Открываем предыдущую карту, не добавляя текущую в историю
                 openModal(prevCard);
             }
         }
 
         function openModal(card) {
-            // Сохраняем текущую открытую карту в глобальную переменную
             currentModalCard = card;
 
-            // Управление видимостью кнопки Назад
             if (modalHistory.length > 0) {
                 modalBackButton.classList.remove('hidden');
             } else {
@@ -587,12 +695,18 @@
                 const cleanStep = step.trim(); 
                 if (cleanStep) {
                     const li = document.createElement('li');
-                    if (!cleanStep.match(/^[\d.]+\s/)) {
+                    
+                    if (cleanStep.startsWith('(')) {
+                        li.textContent = cleanStep;
+                        li.className = "recipe-note"; 
+                    } else if (!cleanStep.match(/^[\d.]+\s/)) {
                          li.innerHTML = `&bull; ${cleanStep}`;
+                         li.className = "text-gray-700"; 
                     } else {
                         li.textContent = cleanStep;
+                        li.className = "text-gray-700"; 
                     }
-                    li.className = "text-gray-700"; 
+                    
                     stepsListEl.appendChild(li);
                 }
             });
@@ -603,7 +717,6 @@
         function showLinkedCard(nameKey) {
             const card = cardDataMap.get(nameKey);
             if (card) {
-                // Если старая функция где-то вызывается, она тоже должна поддерживать историю
                 if (currentModalCard) {
                     modalHistory.push(currentModalCard);
                 }
@@ -659,9 +772,12 @@
                 throw new Error("CSV_URL не заменен на вашу ссылку публикации.");
             }
             
+            const cacheBuster = (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+            const finalUrl = url + cacheBuster;
+            
             for (let i = 0; i < retries; i++) {
                 try {
-                    const response = await fetch(url);
+                    const response = await fetch(finalUrl);
                     if (!response.ok) {
                         let errorText = await response.text();
                         if (errorText.length > 200) errorText = errorText.substring(0, 200) + '...';
@@ -678,6 +794,10 @@
         }
 
         async function loadData() {
+            cardGrid.innerHTML = '';
+            statusIndicator.innerHTML = '';
+            itemsCountLabel.textContent = "Обновление..."; 
+            
             let fetchSuccess = false;
 
             if (CSV_URL) {
@@ -700,15 +820,16 @@
                 } catch (error) {
                     console.error("Критическая ошибка загрузки данных из CSV:", error);
                     statusIndicator.innerHTML = `<div class='text-center p-10 metal-effect mt-8'>
-                                                   <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">⚠️ Ошибка Загрузки Данных (Проверьте URL)</p>
-                                                   <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Причина: <b>${error.message}</b></p>
-                                                   <p class="text-sm text-gray-600 drop-shadow-sm border-t border-gray-300 pt-3 break-all text-left">
-                                                       <b>ДЕЙСТВИЯ:</b><br>
-                                                       1. Убедитесь, что вы заменили <b>плейсхолдер</b> на вашу CSV-ссылку <b>в строке 76</b>.<br>
-                                                       2. Проверьте, что таблица <b>опубликована</b>: "Файл" -> "Поделиться" -> "Опубликовать в Интернете" (формат CSV).<br>
-                                                       ${!CSV_URL.includes("!!! ВСТАВЬТЕ СЮДА") ? `3. Используемая ссылка: <b>${CSV_URL}</b>` : ''}
-                                                   </p>
-                                               </div>`;
+                                                       <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">⚠️ Ошибка Загрузки Данных (Проверьте URL)</p>
+                                                       <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Причина: <b>${error.message}</b></p>
+                                                       <p class="text-sm text-gray-600 drop-shadow-sm border-t border-gray-300 pt-3 break-all text-left">
+                                                           <b>ДЕЙСТВИЯ:</b><br>
+                                                           1. Убедитесь, что вы заменили <b>плейсхолдер</b> на вашу CSV-ссылку <b>в строке 76</b>.<br>
+                                                           2. Проверьте, что таблица <b>опубликована</b>: "Файл" -> "Поделиться" -> "Опубликовать в Интернете" (формат CSV).<br>
+                                                           ${!CSV_URL.includes("!!! ВСТАВЬТЕ СЮДА") ? `3. Используемая ссылка: <b>${CSV_URL}</b>` : ''}
+                                                       </p>
+                                                  </div>`;
+                    itemsCountLabel.textContent = "Ошибка";
                 }
             }
             
@@ -723,10 +844,10 @@
                 });
 
                 statusIndicator.innerHTML = (statusIndicator.innerHTML.includes("Ошибка Загрузки Данных")) ? statusIndicator.innerHTML + `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
-                                               ✅ Приложение переключилось на демонстрационные данные.
-                                             </p>` : `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
-                                               ✅ Используются демонстрационные данные (ошибка загрузки с CSV_URL).
-                                             </p>`;
+                                                                 ✅ Приложение переключилось на демонстрационные данные.
+                                                               </p>` : `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
+                                                                 ✅ Используются демонстрационные данные (ошибка загрузки с CSV_URL).
+                                                               </p>`;
             }
 
 
@@ -744,6 +865,7 @@
 
             } else {
                 statusIndicator.innerHTML = "<div class='text-center text-gray-800 p-10 drop-shadow-md'>Критическая ошибка: Нет данных для отображения.</div>";
+                itemsCountLabel.textContent = "Найдено: 0";
             }
             
             loadingIndicator.classList.add('hidden');
