@@ -168,6 +168,28 @@
             margin-bottom: 0.5rem;
             padding-left: 1.5rem;
         }
+
+        /* Стиль кнопок выбора вариации */
+        .variation-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 1px solid #e5e7eb;
+            background-color: #f3f4f6;
+            color: #4b5563;
+            white-space: nowrap;
+        }
+        .variation-btn:hover {
+            background-color: #e5e7eb;
+        }
+        .variation-btn.active {
+            background-color: #4A90E2;
+            color: white;
+            border-color: #4A90E2;
+            box-shadow: 0 2px 5px rgba(74, 144, 226, 0.3);
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8">
@@ -177,21 +199,14 @@
         <p class="text-gray-500 mt-2">Интерактивный каталог с переходами между составными частями.</p>
     </header>
 
-    <!-- Панель управления: Фильтр, Поиск и Кнопка Обновить -->
+    <!-- Панель управления -->
     <div class="flex flex-col sm:flex-row justify-center items-center mb-4 gap-4 max-w-3xl mx-auto">
-        <select id="categoryFilter" class="w-full sm:w-1/4 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300">
+        <select id="categoryFilter" class="w-full sm:w-1/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300">
             <option value="">Все Категории</option>
         </select>
         
         <input type="text" id="searchBar" placeholder="🔍 Поиск..." 
-               class="w-full sm:w-2/4 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300 placeholder-gray-500">
-               
-        <div class="flex items-center gap-2">
-            <button onclick="loadData()" title="Обновить данные из таблицы"
-                    class="p-4 text-lg metal-effect font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center">
-                <span>🔄</span>
-            </button>
-        </div>
+               class="w-full sm:w-2/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300 placeholder-gray-500">
     </div>
     <!-- Счетчик -->
     <div class="text-center mb-8 text-sm text-gray-500">
@@ -205,16 +220,15 @@
         </div>
     </div>
     
-    <!-- Сетка с 3 колонками на узких экранах и до 6 на широких -->
+    <!-- Сетка -->
     <div id="cardGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl mx-auto">
     </div>
     
     <dialog id="recipeModal" class="p-0 rounded-2xl metal-effect w-11/12 max-w-2xl lg:max-w-3xl mx-auto overflow-hidden">
         <div class="p-6 sm:p-8 bg-white/50 max-h-[95vh] overflow-y-auto">
             
-            <!-- Заголовок модального окна с кнопками управления -->
-            <div class="flex justify-between items-start mb-6 gap-4">
-                <!-- Контейнер для кнопки Назад и Заголовка -->
+            <!-- Заголовок и навигация -->
+            <div class="flex justify-between items-start mb-2 gap-4">
                 <div class="flex items-center gap-3 flex-grow">
                     <button id="modalBackButton" onclick="goBack()" 
                             class="hidden back-button metal-effect rounded-full w-10 h-10 flex-shrink-0 font-bold"
@@ -230,6 +244,9 @@
                 </button>
             </div>
             
+            <!-- КОНТЕЙНЕР ДЛЯ ВАРИАЦИЙ -->
+            <div id="variationContainer" class="flex flex-wrap gap-2 mb-6 hidden"></div>
+
             <div class="flex flex-col lg:flex-row gap-6">
                 
                 <div class="lg:w-1/3 flex flex-col items-center p-4 metal-effect flex-shrink-0">
@@ -258,11 +275,12 @@
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ukbh5K5GdykFFCDj-H0xUODUAneKWmbeJFfe4tLTCMEWKJgCkefhrCOtsKDB_QRRYySAvI1xOTh3/pub?gid=1617440067&single=true&output=csv";
         
         let allCardData = [];
+        let groupedCardData = []; // Сгруппированные данные
         const cardDataMap = new Map();
         
         // --- ПЕРЕМЕННЫЕ ДЛЯ ИСТОРИИ НАВИГАЦИИ ---
-        let modalHistory = []; // Стек истории
-        let currentModalCard = null; // Текущая отображаемая карта
+        let modalHistory = []; 
+        let currentModalGroup = null; // Теперь храним группу (массив карточек)
         
         const cardGrid = document.getElementById('cardGrid');
         const searchBar = document.getElementById('searchBar');
@@ -272,44 +290,44 @@
         const categoryFilter = document.getElementById('categoryFilter');
         const modalBackButton = document.getElementById('modalBackButton');
         const itemsCountLabel = document.getElementById('itemsCount');
+        const variationContainer = document.getElementById('variationContainer');
 
         const sampleData = [
             {
-                'название': 'Напиток Кактус-Жасмин',
-                'объём': '350',
-                'категория': 'Авторские Лимонады',
-                'состав': '1. ПФ Кактус-Каламанси - 100мл; 2. ПФ Чай Жасмин - 0,50мл; 3. Газ Вода - 0,50мл; 4. Лёд', 
-                'рецепт': '1. Смешайте все компоненты, кроме льда; 2. Перелейте в бокал, наполненный льдом; 3. Вставьте трубочку.', 
-                'фото': 'https://placehold.co/400x600/FFFFFF/666666?text=Напиток+(Демо)' 
+                'название': 'Тайгер Шугар Тёплый',
+                'объём': '400',
+                'категория': 'Бабл Ти',
+                'состав': 'Молоко, сахар', 
+                'рецепт': 'Нагреть.', 
+                'фото': 'https://placehold.co/400x600/FFFFFF/666666?text=Тайгер+Теплый' 
             },
             {
-                'название': 'ПФ Кактус-Каламанси (Очень Длинное Название)',
-                'объём': '1000',
-                'категория': 'Полуфабрикаты',
-                'состав': '1. Пюре Кактус - 500гр; 2. Сок Каламанси - 500гр',
-                'рецепт': '1. Смешать до однородной массы.',
-                'фото': 'https://placehold.co/400x300/FFFFFF/666666?text=ПФ+(Демо)' 
+                'название': 'Тайгер Шугар Холодный',
+                'объём': '400',
+                'категория': 'Бабл Ти',
+                'состав': 'Молоко, сахар, лед',
+                'рецепт': 'Взбить.',
+                'фото': 'https://placehold.co/400x600/E0E0E0/666666?text=Тайгер+Холодный' 
             },
             {
-                'название': 'Лёд',
-                'объём': '-',
-                'категория': 'Технические',
-                'состав': 'Вода',
-                'рецепт': '1. Заморозить в ледогенераторе.',
-                'фото': '' 
-            },
-            {
-                'название': 'Флэт Уайт',
-                'объём': '180',
+                'название': 'Айс Латте',
+                'объём': '300',
                 'категория': 'Кофе',
-                'состав': '1. Двойной Ристретто - 40 мл; 2. Молоко 3.2% - 140 мл', 
-                'рецепт': '1. Приготовьте двойной ристретто; 2. Взбейте молоко; 3. Влейте молоко.', 
-                'фото': 'https://placehold.co/400x300/FFFFFF/666666?text=Флэт+Уайт+(Демо)' 
+                'состав': 'Эспрессо, молоко, лед',
+                'рецепт': 'Взбить',
+                'фото': 'https://placehold.co/400x600/E0E0E0/666666?text=Айс+Латте' 
+            },
+            {
+                'название': 'Айс Латте Банан',
+                'объём': '300',
+                'категория': 'Кофе',
+                'состав': 'Эспрессо, молоко, сироп банан',
+                'рецепт': 'Взбить',
+                'фото': 'https://placehold.co/400x600/E0E0E0/666666?text=Айс+Латте+Банан' 
             }
         ];
 
-        // --- НОВЫЙ МОЩНЫЙ CSV ПАРСЕР ---
-        // Умеет читать переносы строк внутри ячеек (Alt+Enter в Excel/Google)
+        // --- CSV ПАРСЕР ---
         function parseCSVRobust(text, delimiter = ',') {
             const rows = [];
             let currentRow = [];
@@ -322,22 +340,16 @@
                 
                 if (char === '"') {
                     if (inQuotes && nextChar === '"') {
-                        // Экранированная кавычка: "" -> "
                         currentField += '"';
                         i++; 
                     } else {
-                        // Переключение режима кавычек
                         inQuotes = !inQuotes;
                     }
                 } else if (char === delimiter && !inQuotes) {
-                    // Конец поля
                     currentRow.push(currentField);
                     currentField = '';
                 } else if ((char === '\n' || char === '\r') && !inQuotes) {
-                    // Конец строки (если не внутри кавычек)
-                    if (char === '\r' && nextChar === '\n') {
-                        i++; // Пропускаем \n при \r\n
-                    }
+                    if (char === '\r' && nextChar === '\n') i++; 
                     currentRow.push(currentField);
                     rows.push(currentRow);
                     currentRow = [];
@@ -346,81 +358,164 @@
                     currentField += char;
                 }
             }
-            
-            // Добавляем последнюю строку, если она есть
             if (currentField || currentRow.length > 0) {
                 currentRow.push(currentField);
                 rows.push(currentRow);
             }
-            
             return rows;
         }
 
-        // --- Умный парсер для состава (Ингредиенты + Объем) ---
+        // --- Умный парсер для состава ---
         function parseSmartIngredients(rawIngredients, currentVolume) {
-            if (!rawIngredients) return { cleanIngredients: '', extractedVolume: currentVolume };
-
+            let unit = 'мл'; 
             let volume = currentVolume;
-            // Улучшенный поиск объема (поддерживает дробные числа, например 0,5 или 1.5)
-            const volumeMatch = rawIngredients.match(/(?:Объем|Объём).*?(\d+(?:[.,]\d+)?)\s*(?:мл|гр|g|l|л)?/i);
             
-            if (volumeMatch && volumeMatch[1]) {
-                volume = volumeMatch[1];
+            if (rawIngredients) {
+                const volumeMatch = rawIngredients.match(/((?:Объем|Объём|Вес).*?)(\d+(?:[.,]\d+)?)/i);
+                if (volumeMatch) {
+                    const context = volumeMatch[1].toLowerCase();
+                    const val = volumeMatch[2];
+                    if (context.includes('гр') || context.includes('г.') || context.includes(' g') || context.includes(' gr')) {
+                        unit = 'гр';
+                    } else if (context.includes('мл') || context.includes('ml')) {
+                        unit = 'мл';
+                    } else if (context.includes('вес')) {
+                        unit = 'гр'; 
+                    } else {
+                        unit = 'мл'; 
+                    }
+                    volume = val;
+                }
             }
 
-            // Убираем строку с объемом из ингредиентов
-            let cleanText = rawIngredients.replace(/(?:Объем|Объём).*?(\d+(?:[.,]\d+)?).*$/gmi, '');
+            if (!rawIngredients) return { cleanIngredients: '', extractedVolume: currentVolume, extractedUnit: 'мл' };
 
+            let cleanText = rawIngredients.replace(/(?:Объем|Объём|Вес).*?(\d+(?:[.,]\d+)?).*$/gmi, '');
             let lines = cleanText.split(/[\n;]+/);
             
             let processedLines = lines.map(line => {
                 let l = line.trim();
                 if (!l) return null;
-
-                // Исправляем: "1Ингредиент" -> "1. Ингредиент"
                 l = l.replace(/^(\d+)([а-яА-Яa-zA-Z])/u, '$1. $2');
-
-                // --- ОБНОВЛЕННЫЙ РЕГУЛЯР ---
-                // Исправляем единицы измерения, учитывая возможные пробелы.
-                // Было: "Молокомл50" -> "Молоко - 50мл"
-                // Стало: "Молоко мл 50" -> "Молоко - 50мл", "ФК гр 90" -> "ФК - 90гр"
-                // \s* означает "любое количество пробелов (или их отсутствие)"
                 l = l.replace(/([а-яА-Яa-zA-Z])\s*(гр|г|мл|л|gr|g|ml|l)\.?\s*(\d+(?:[.,]\d+)?)/giu, '$1 - $3$2');
-                
                 return l;
             }).filter(l => l); 
 
             return {
                 cleanIngredients: processedLines.join('; '), 
-                extractedVolume: volume
+                extractedVolume: volume,
+                extractedUnit: unit
             };
         }
 
-        // --- НОВАЯ ФУНКЦИЯ: Умный парсер для рецепта ---
         function parseSmartRecipe(rawRecipe) {
             if (!rawRecipe) return '';
-            
-            // Разбиваем по переносам строк или точке с запятой
             let lines = rawRecipe.split(/[\n;]+/);
-            
             let processedLines = lines.map(line => {
                 let l = line.trim();
                 if (!l) return null;
-                
-                // Исправляем "1.Текст" -> "1. Текст"
                 l = l.replace(/^(\d+)\.([^\s])/u, '$1. $2');
-                
-                // Исправляем "1Текст" -> "1. Текст" (если это начало строки и одна цифра)
                 l = l.replace(/^(\d)([а-яА-Яa-zA-Z])/u, '$1. $2');
-
                 return l;
             }).filter(l => l);
-
             return processedLines.join('\n');
+        }
+
+        // --- НОВАЯ СИСТЕМА ГРУППИРОВКИ (Очистка имени) ---
+        function getCleanName(name, category) {
+            if (!name) return "";
+            
+            const nameLower = name.toLowerCase();
+            const categoryLower = category ? category.toLowerCase() : "";
+            
+            // 3. ИСКЛЮЧЕНИЕ КАТЕГОРИИ КОФЕ
+            // Если категория Кофе или Coffee, мы НЕ ЧИСТИМ имя от добавок.
+            // Возвращаем оригинал (в нижнем регистре для группировки дублей, но не вариаций)
+            if (categoryLower.includes('кофе') || categoryLower.includes('coffee')) {
+                return name.trim();
+            }
+
+            // Список слов-паразитов для группировки. 
+            // Это слова, которые "не меняют суть" напитка, а только его состояние.
+            // "Банан" или "Клубника" СЮДА НЕ ВХОДЯТ (поэтому Айс Латте Банан останется собой)
+            const suffixesToRemove = [
+                'теплый', 'тёплый', 'холодный', 'горячий', 
+                'warm', 'hot', 'cold', 'ice', 'cool',
+                'без пф', 'с пф', 'б/пф', 'no pf',
+                'большой', 'средний', 'маленький',
+                'классический', 'классика', 'оригинал'
+            ];
+            
+            // Также удаляем объемы (300мл, 0.4 и т.д.)
+            // И содержимое скобок (...)
+            
+            let clean = nameLower;
+
+            // 1. Удаляем скобки и все внутри
+            clean = clean.replace(/\(.*\)/g, '');
+            clean = clean.replace(/\[.*\]/g, '');
+
+            // 2. Удаляем объемы в конце (например " 300мл", " 0,5")
+            clean = clean.replace(/\s+\d+([.,]\d+)?\s*(мл|ml|гр|gr|г|л)?\s*$/i, '');
+
+            // 3. Удаляем слова из списка (только если они в конце или отдельные слова)
+            suffixesToRemove.forEach(word => {
+                // Регулярка ищет слово, перед которым пробел (или начало строки)
+                const regex = new RegExp(`(^|\\s)${word}(\\s|$)`, 'gi');
+                clean = clean.replace(regex, ' ');
+            });
+
+            // Чистим хвосты и лишние пробелы
+            clean = clean.replace(/\s+/g, ' ').trim();
+            
+            // Убираем знаки препинания в конце
+            clean = clean.replace(/[-:]$/, '').trim();
+
+            // Если удалили вообще всё, возвращаем оригинал
+            if (clean.length < 2) return name.trim();
+            
+            return clean; // Возвращаем название в оригинальном регистре для красоты? Нет, лучше как есть
+        }
+
+        // Вспомогательная функция для красивого отображения имени группы (делает первые буквы заглавными)
+        function capitalizeWords(str) {
+            return str.replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function groupCards(data) {
+            const groupsMap = new Map();
+            
+            data.forEach(card => {
+                const name = card['название'];
+                const category = card['категория'];
+                
+                // Получаем "чистое имя" (ключ группировки)
+                // Для Кофе оно вернет полное имя ("айс латте банан"), для Бабл Ти - чистое ("тайгер шугар")
+                const cleanNameKey = getCleanName(name, category).toLowerCase();
+                
+                // Формируем уникальный ключ: Категория + Чистое имя
+                const mapKey = `${category.toLowerCase()}|${cleanNameKey}`;
+                
+                if (!groupsMap.has(mapKey)) {
+                    // Пытаемся сделать красивое имя для отображения группы
+                    // Берем cleanNameKey и делаем первые буквы заглавными, или берем имя первой карты если оно совпадает
+                    let displayGroupName = capitalizeWords(cleanNameKey);
+                    
+                    groupsMap.set(mapKey, {
+                        commonName: displayGroupName, 
+                        cards: []
+                    });
+                }
+                
+                groupsMap.get(mapKey).cards.push(card);
+            });
+            
+            // Превращаем Map обратно в массив и сортируем
+            return Array.from(groupsMap.values())
+                .sort((a, b) => a.commonName.localeCompare(b.commonName));
         }
         
         function csvToObjectArray(csvText) {
-            // 1. Пытаемся определить разделитель по первой строке
             const firstLineEnd = csvText.indexOf('\n');
             const firstLine = csvText.substring(0, firstLineEnd > -1 ? firstLineEnd : csvText.length);
             
@@ -431,15 +526,10 @@
                 delimiter = '|';
             }
 
-            // 2. Используем надежный парсер
             const rows = parseCSVRobust(csvText, delimiter);
 
-            if (rows.length < 2) {
-                console.error("Ошибка: В файле CSV меньше двух строк (заголовки + данные).");
-                return [];
-            }
+            if (rows.length < 2) return [];
             
-            // 3. Обрабатываем заголовки
             const rawHeaders = rows[0];
             const headers = rawHeaders.map(h => h.toLowerCase().trim().replace(/^\ufeff/, ''));
             
@@ -447,24 +537,15 @@
             const missingCriticalHeaders = requiredHeaders.filter(h => !headers.includes(h));
             
             if (missingCriticalHeaders.length > 0) {
-                document.getElementById('statusIndicator').innerHTML = `
-                    <div class='text-center p-10 metal-effect mt-8'>
-                        <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">КРИТИЧЕСКАЯ ОШИБКА: Заголовки</p>
-                        <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Не найдены обязательные колонки: <b>${missingCriticalHeaders.join(', ')}</b>.</p>
-                        <p class="text-sm text-gray-600 drop-shadow-sm">Убедитесь, что в первой строке таблицы точно указаны: название, состав, рецепт, объём, фото.</p>
-                    </div>
-                `;
+                document.getElementById('statusIndicator').innerHTML = `КРИТИЧЕСКАЯ ОШИБКА: Нет колонок ${missingCriticalHeaders.join(', ')}`;
                 return [];
             }
             
             const data = [];
             const categoryIndex = headers.indexOf('категория');
 
-            // 4. Проходимся по данным
             for (let i = 1; i < rows.length; i++) {
                 const values = rows[i];
-                
-                // Пропускаем пустые строки
                 if (values.length === 0 || (values.length === 1 && values[0] === '')) continue;
 
                 const obj = {};
@@ -472,67 +553,73 @@
                     obj[header] = (index < values.length) ? values[index].trim() : "";
                 });
                 
-                if (categoryIndex === -1) {
-                    obj['категория'] = 'Без Категории';
-                }
+                if (categoryIndex === -1) obj['категория'] = 'Без Категории';
 
                 if (obj['название'] && obj['название'].trim() !== '') {
-                    // --- ПРИМЕНЯЕМ УМНЫЕ ПАРСЕРЫ ---
-                    
                     const smartIngredients = parseSmartIngredients(obj['состав'], obj['объём']);
                     obj['состав'] = smartIngredients.cleanIngredients;
+                    
                     if ((!obj['объём'] || obj['объём'].trim() === '' || obj['объём'] === '-') && smartIngredients.extractedVolume) {
                         obj['объём'] = smartIngredients.extractedVolume;
                     }
                     
+                    obj['единица'] = smartIngredients.extractedUnit;
                     obj['рецепт'] = parseSmartRecipe(obj['рецепт']);
-                    // ------------------------------------
-
                     data.push(obj);
                 }
             }
-            
             return data;
         }
 
-        function renderGrid(data) {
+        function renderGrid(groups) {
             cardGrid.innerHTML = '';
-            if (data !== sampleData && !statusIndicator.innerHTML.includes("демонстрационные данные")) {
+            if (groups.length > 0 && !statusIndicator.innerHTML.includes("демонстрационные данные")) {
                 statusIndicator.innerHTML = ''; 
             }
             
-            if (data.length === 0) {
-                statusIndicator.innerHTML = "<p class='text-gray-600 font-medium'>Ничего не найдено. Попробуйте другой поисковый запрос.</p>";
+            if (groups.length === 0) {
+                statusIndicator.innerHTML = "<p class='text-gray-600 font-medium'>Ничего не найдено.</p>";
                 itemsCountLabel.textContent = "Найдено: 0";
                 return;
             }
             
-            itemsCountLabel.textContent = `Показано карт: ${data.length}`;
+            itemsCountLabel.textContent = `Показано позиций: ${groups.length}`;
 
-            data.forEach((card, index) => {
+            groups.forEach((groupObj, index) => {
+                const groupName = groupObj.commonName; 
+                const cards = groupObj.cards;
+                const mainCard = cards[0]; 
+                
                 const cardElement = document.createElement('div');
                 cardElement.className = "metal-effect p-3 overflow-hidden cursor-pointer flex flex-col items-center text-center card-item"; 
                 cardElement.classList.add('card-enter');
                 cardElement.style.animationDelay = `${index * 0.05}s`; 
-                cardElement.dataset.index = index; 
+
+                let badge = '';
+                if (cards.length > 1) {
+                    badge = `<span class="absolute top-2 right-2 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-10">${cards.length} вар.</span>`;
+                }
 
                 cardElement.innerHTML = `
-                    <div class="w-full h-24 mb-2 rounded-lg border-2 border-gray-200 bg-white flex items-center justify-center overflow-hidden">
-                        <img src="${card['фото'] || 'https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'}" 
-                                alt="${card['название']}" 
-                                class="w-full h-full object-contain" 
-                                onerror="this.onerror=null; this.src='https://placehold.co/300x200/CCCCCC/666666?text=Нет+Фото';" />
+                    <div class="relative w-full h-24 mb-2">
+                        ${badge}
+                        <div class="w-full h-full rounded-lg border-2 border-gray-200 bg-white flex items-center justify-center overflow-hidden">
+                            <img src="${mainCard['фото'] || 'https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'}" 
+                                    alt="${groupName}" 
+                                    class="w-full h-full object-contain" 
+                                    onerror="this.onerror=null; this.src='https://placehold.co/300x200/CCCCCC/666666?text=Нет+Фото';" />
+                        </div>
                     </div>
                     <h3 class="text-sm font-semibold text-gray-700 drop-shadow-sm w-full leading-tight mb-1">
-                        ${card['название'] || 'Без названия'}
+                        ${groupName || 'Без названия'}
                     </h3>
-                    <p class="text-xs text-gray-500 mt-1 mb-1">${card['категория'] || 'Без Категории'}</p>
-                    <p class="text-sm text-gray-600 drop-shadow-sm">${card['объём'] || '?'} мл</p>
+                    <p class="text-xs text-gray-500 mt-1 mb-1">${mainCard['категория'] || 'Без Категории'}</p>
+                    <p class="text-sm text-gray-600 drop-shadow-sm">${mainCard['объём'] || '?'} ${mainCard['единица'] || 'мл'}</p>
                 `;
                 
                 cardElement.addEventListener('click', () => {
                     modalHistory = [];
-                    openModal(card);
+                    openModal(groupObj);
                 });
                 cardGrid.appendChild(cardElement);
             });
@@ -542,34 +629,42 @@
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
+        // Обновленная функция линковки
         function createLinkedIngredientElements(text) {
-            let parts = [{ text: text, card: null }];
+            let parts = [{ text: text, group: null }];
             
-            const sortedNames = Array.from(cardDataMap.keys())
-                                            .filter(name => name.length >= 3) 
-                                            .sort((a, b) => b.length - a.length);
+            const lookupMap = new Map();
+            
+            groupedCardData.forEach(groupObj => {
+                if (groupObj.commonName && groupObj.commonName.length >= 3) {
+                    lookupMap.set(groupObj.commonName.toLowerCase().trim(), groupObj);
+                }
+                groupObj.cards.forEach(card => {
+                     if (card['название'] && card['название'].length >= 3) {
+                        lookupMap.set(card['название'].toLowerCase().trim(), groupObj);
+                    }
+                });
+            });
+
+            const sortedNames = Array.from(lookupMap.keys()).sort((a, b) => b.length - a.length);
 
             for (const dbName of sortedNames) {
                 const newParts = [];
-                
                 for (const part of parts) {
-                    if (part.card) {
+                    if (part.group) {
                         newParts.push(part);
                         continue;
                     }
-
                     const regex = new RegExp(`(${escapeRegExp(dbName)})`, 'gi');
                     const splitArr = part.text.split(regex);
-                    
                     if (splitArr.length > 1) {
                         for (let i = 0; i < splitArr.length; i++) {
                             const chunk = splitArr[i];
                             if (!chunk) continue;
-
                             if (chunk.toLowerCase() === dbName) {
-                                newParts.push({ text: chunk, card: cardDataMap.get(dbName) });
+                                newParts.push({ text: chunk, group: lookupMap.get(dbName) });
                             } else {
-                                newParts.push({ text: chunk, card: null });
+                                newParts.push({ text: chunk, group: null });
                             }
                         }
                     } else {
@@ -583,17 +678,15 @@
             let foundAnyLink = false;
 
             parts.forEach(part => {
-                if (part.card) {
+                if (part.group) {
                     foundAnyLink = true;
                     const btn = document.createElement('button');
                     btn.className = 'ingredient-button';
                     btn.textContent = part.text; 
                     btn.onclick = (e) => {
                         e.stopPropagation();
-                        if (currentModalCard) {
-                            modalHistory.push(currentModalCard);
-                        }
-                        openModal(part.card);
+                        if (currentModalGroup) modalHistory.push(currentModalGroup);
+                        openModal(part.group);
                     };
                     fragment.appendChild(btn);
                 } else {
@@ -605,46 +698,37 @@
                  const cleanName = text.toLowerCase().trim();
                  for (const dbName of sortedNames) {
                      if (dbName.includes(cleanName)) {
-                         const card = cardDataMap.get(dbName);
+                         const group = lookupMap.get(dbName);
                          while(fragment.firstChild) fragment.removeChild(fragment.firstChild);
-                         
                          const btn = document.createElement('button');
                          btn.className = 'ingredient-button';
                          btn.textContent = text; 
                          btn.onclick = (e) => {
                             e.stopPropagation();
-                            if (currentModalCard) {
-                                modalHistory.push(currentModalCard);
-                            }
-                            openModal(card);
+                            if (currentModalGroup) modalHistory.push(currentModalGroup);
+                            openModal(group);
                          };
                          fragment.appendChild(btn);
                          return fragment;
                      }
                  }
             }
-
             return fragment;
         }
 
         function goBack() {
             if (modalHistory.length > 0) {
-                const prevCard = modalHistory.pop();
-                openModal(prevCard);
+                const prevGroup = modalHistory.pop();
+                openModal(prevGroup);
             }
         }
 
-        function openModal(card) {
-            currentModalCard = card;
-
-            if (modalHistory.length > 0) {
-                modalBackButton.classList.remove('hidden');
-            } else {
-                modalBackButton.classList.add('hidden');
-            }
-
+        function updateModalContent(card) {
             document.getElementById('modalName').textContent = card['название'] || 'Без названия';
-            document.getElementById('modalVolume').textContent = `Объем: ${card['объём'] || '?'} мл`; 
+            
+            const unit = card['единица'] || 'мл';
+            const label = unit === 'гр' ? 'Вес:' : 'Объем:';
+            document.getElementById('modalVolume').textContent = `${label} ${card['объём'] || '?'} ${unit}`; 
             
             const modalImage = document.getElementById('modalImage');
             modalImage.src = card['фото'] || '';
@@ -672,17 +756,10 @@
                     ingredientName = match[2] ? match[2].trim() : cleanItem; 
                     suffix = match[3] || '';
                 } 
-                
-                if (prefix) {
-                    li.appendChild(document.createTextNode(prefix));
-                }
-
+                if (prefix) li.appendChild(document.createTextNode(prefix));
                 const contentFragment = createLinkedIngredientElements(ingredientName);
                 li.appendChild(contentFragment);
-
-                if (suffix) {
-                    li.appendChild(document.createTextNode(suffix));
-                }
+                if (suffix) li.appendChild(document.createTextNode(suffix));
                 
                 ingredientsListEl.appendChild(li);
             });
@@ -695,7 +772,6 @@
                 const cleanStep = step.trim(); 
                 if (cleanStep) {
                     const li = document.createElement('li');
-                    
                     if (cleanStep.startsWith('(')) {
                         li.textContent = cleanStep;
                         li.className = "recipe-note"; 
@@ -706,58 +782,105 @@
                         li.textContent = cleanStep;
                         li.className = "text-gray-700"; 
                     }
-                    
                     stepsListEl.appendChild(li);
                 }
             });
-            
-            recipeModal.showModal();
         }
 
-        function showLinkedCard(nameKey) {
-            const card = cardDataMap.get(nameKey);
-            if (card) {
-                if (currentModalCard) {
-                    modalHistory.push(currentModalCard);
-                }
-                openModal(card);
+        function openModal(groupObj) {
+            if (!groupObj || !groupObj.cards || groupObj.cards.length === 0) return;
+            currentModalGroup = groupObj;
+
+            if (modalHistory.length > 0) {
+                modalBackButton.classList.remove('hidden');
+            } else {
+                modalBackButton.classList.add('hidden');
             }
+
+            const cards = groupObj.cards;
+            const commonName = groupObj.commonName;
+
+            // Очистка и создание кнопок вариаций
+            variationContainer.innerHTML = '';
+            
+            if (cards.length > 1) {
+                variationContainer.classList.remove('hidden');
+                
+                cards.forEach((card, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'variation-btn';
+                    
+                    // Пытаемся сформировать краткое имя кнопки
+                    let btnText = card['название'];
+                    
+                    // Экранируем спецсимволы в общем имени для regex
+                    const escapedCommon = commonName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regexCommon = new RegExp('^' + escapedCommon, 'i');
+                    
+                    if (regexCommon.test(btnText)) {
+                        // Отрезаем общее имя из названия кнопки
+                        btnText = btnText.replace(regexCommon, '').trim();
+                        // Убираем возможные скобки или тире
+                        btnText = btnText.replace(/^[\s\(\)-]+|[\s\)]+$/g, '');
+                    }
+
+                    if (btnText.length === 0) {
+                        btnText = "Классика"; 
+                    } else {
+                         // Делаем первую букву заглавной
+                        btnText = btnText.charAt(0).toUpperCase() + btnText.slice(1);
+                    }
+                    
+                    btn.textContent = btnText;
+                    
+                    btn.onclick = () => {
+                        document.querySelectorAll('.variation-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        updateModalContent(card);
+                    };
+                    
+                    variationContainer.appendChild(btn);
+                });
+                
+                variationContainer.firstChild.classList.add('active');
+            } else {
+                variationContainer.classList.add('hidden');
+            }
+
+            updateModalContent(cards[0]);
+            
+            recipeModal.showModal();
         }
 
         function filterDrinks() {
             const textQuery = searchBar.value.toLowerCase().trim();
             const selectedCategory = categoryFilter.value; 
 
-            const filtered = allCardData.filter(card => {
-                const name = card['название'] ? card['название'].toLowerCase() : '';
-                const cardCategory = card['категория'] ? card['категория'].trim() : 'Без Категории'; 
+            const filteredGroups = groupedCardData.filter(groupObj => {
+                return groupObj.cards.some(card => {
+                    const name = card['название'] ? card['название'].toLowerCase() : '';
+                    const cardCategory = card['категория'] ? card['категория'].trim() : 'Без Категории'; 
 
-                const matchesText = !textQuery || name.includes(textQuery);
-                const matchesCategory = !selectedCategory || cardCategory === selectedCategory; 
-                
-                return matchesText && matchesCategory;
-            }
-            );
+                    const matchesText = !textQuery || name.includes(textQuery);
+                    const matchesCategory = !selectedCategory || cardCategory === selectedCategory;
+                    return matchesText && matchesCategory;
+                });
+            });
             
-            renderGrid(filtered);
+            renderGrid(filteredGroups);
         }
 
         function populateCategoryFilter(data) {
             const categories = new Set();
             data.forEach(drink => {
                 const category = drink['категория'] ? drink['категория'].trim() : 'Без Категории';
-                if (category) {
-                    categories.add(category);
-                }
+                if (category) categories.add(category);
             });
-
             categoryFilter.innerHTML = '';
-            
             const defaultOption = document.createElement('option');
             defaultOption.value = '';
             defaultOption.textContent = 'Все Категории';
             categoryFilter.appendChild(defaultOption);
-
             const sortedCategories = Array.from(categories).sort();
             sortedCategories.forEach(category => {
                 const option = document.createElement('option');
@@ -765,32 +888,6 @@
                 option.textContent = category;
                 categoryFilter.appendChild(option);
             });
-        }
-
-        async function retryFetch(url, retries = 3, delay = 1000) {
-            if (url.includes("!!! ВСТАВЬТЕ СЮДА")) {
-                throw new Error("CSV_URL не заменен на вашу ссылку публикации.");
-            }
-            
-            const cacheBuster = (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-            const finalUrl = url + cacheBuster;
-            
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(finalUrl);
-                    if (!response.ok) {
-                        let errorText = await response.text();
-                        if (errorText.length > 200) errorText = errorText.substring(0, 200) + '...';
-                        throw new Error(`HTTP Ошибка ${response.status}. Тело ответа: ${errorText}`);
-                    }
-                    return response;
-                } catch (error) {
-                    if (i === retries - 1) {
-                        throw new Error(`Критическая ошибка загрузки после ${retries} попыток. Проверьте сеть, URL и настройки публикации (Publish to web) таблицы Google.`);
-                    }
-                    await new Promise(resolve => setTimeout(resolve, delay * (2 ** i)));
-                }
-            }
         }
 
         async function loadData() {
@@ -808,67 +905,56 @@
                     
                     allCardData = csvToObjectArray(csvText);
                     
-                    cardDataMap.clear();
-                    allCardData.forEach(card => {
-                        if (card['название']) {
-                            cardDataMap.set(card['название'].toLowerCase().trim(), card);
-                        }
-                    });
+                    groupedCardData = groupCards(allCardData);
                     
-                    fetchSuccess = cardDataMap.size > 0;
+                    fetchSuccess = groupedCardData.length > 0;
 
                 } catch (error) {
-                    console.error("Критическая ошибка загрузки данных из CSV:", error);
-                    statusIndicator.innerHTML = `<div class='text-center p-10 metal-effect mt-8'>
-                                                       <p class="font-bold mb-4 text-xl text-red-600 drop-shadow-md">⚠️ Ошибка Загрузки Данных (Проверьте URL)</p>
-                                                       <p class="text-lg text-gray-800 mb-4 drop-shadow-sm">Причина: <b>${error.message}</b></p>
-                                                       <p class="text-sm text-gray-600 drop-shadow-sm border-t border-gray-300 pt-3 break-all text-left">
-                                                           <b>ДЕЙСТВИЯ:</b><br>
-                                                           1. Убедитесь, что вы заменили <b>плейсхолдер</b> на вашу CSV-ссылку <b>в строке 76</b>.<br>
-                                                           2. Проверьте, что таблица <b>опубликована</b>: "Файл" -> "Поделиться" -> "Опубликовать в Интернете" (формат CSV).<br>
-                                                           ${!CSV_URL.includes("!!! ВСТАВЬТЕ СЮДА") ? `3. Используемая ссылка: <b>${CSV_URL}</b>` : ''}
-                                                       </p>
-                                                  </div>`;
+                    console.error(error);
+                    statusIndicator.innerHTML = "Ошибка загрузки"; 
                     itemsCountLabel.textContent = "Ошибка";
                 }
             }
             
             if (!fetchSuccess) {
                 allCardData = sampleData;
+                groupedCardData = groupCards(allCardData);
                 
-                cardDataMap.clear();
-                allCardData.forEach(card => {
-                    if (card['название']) {
-                        cardDataMap.set(card['название'].toLowerCase().trim(), card);
-                    }
-                });
-
-                statusIndicator.innerHTML = (statusIndicator.innerHTML.includes("Ошибка Загрузки Данных")) ? statusIndicator.innerHTML + `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
-                                                                 ✅ Приложение переключилось на демонстрационные данные.
-                                                               </p>` : `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
-                                                                 ✅ Используются демонстрационные данные (ошибка загрузки с CSV_URL).
-                                                               </p>`;
+                statusIndicator.innerHTML = `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
+                                                 ✅ Используются демонстрационные данные
+                                               </p>`;
             }
 
-
-            if (cardDataMap.size > 0) {
+            if (groupedCardData.length > 0) {
                 loadingIndicator.classList.add('hidden');
-                if (!statusIndicator.innerHTML.includes("демонстрационные данные")) {
-                    statusIndicator.innerHTML = ''; 
-                }
+                if (!statusIndicator.innerHTML.includes("демонстрационные данные")) statusIndicator.innerHTML = ''; 
                 
                 populateCategoryFilter(allCardData);
-                renderGrid(allCardData);
+                renderGrid(groupedCardData);
                 
                 searchBar.addEventListener('input', filterDrinks);
                 categoryFilter.addEventListener('change', filterDrinks); 
 
             } else {
-                statusIndicator.innerHTML = "<div class='text-center text-gray-800 p-10 drop-shadow-md'>Критическая ошибка: Нет данных для отображения.</div>";
+                statusIndicator.innerHTML = "Нет данных";
                 itemsCountLabel.textContent = "Найдено: 0";
             }
-            
             loadingIndicator.classList.add('hidden');
+        }
+        
+        async function retryFetch(url, retries = 3, delay = 1000) {
+            if (url.includes("!!! ВСТАВЬТЕ СЮДА")) throw new Error("URL не заменен");
+            const finalUrl = url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(finalUrl);
+                    if (!res.ok) throw new Error(res.status);
+                    return res;
+                } catch (e) {
+                    if (i === retries - 1) throw e;
+                    await new Promise(r => setTimeout(r, delay * (2 ** i)));
+                }
+            }
         }
 
         window.onload = loadData;
