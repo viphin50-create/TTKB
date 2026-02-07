@@ -17,7 +17,6 @@
             background-attachment: fixed;
         }
 
-        /* Общий стиль для интерактивных элементов */
         .metal-effect {
             background-color: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(10px);
@@ -29,52 +28,32 @@
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
-        /* Улучшенный эффект при наведении для общих "metal-effect" */
         .metal-effect:hover {
-            border-color: rgba(167, 215, 249, 1); /* Светло-голубой акцент */
+            border-color: rgba(167, 215, 249, 1);
             box-shadow: 
                 0 8px 25px rgba(0, 0, 0, 0.15),
-                0 0 20px rgba(167, 215, 249, 0.8) inset; /* Более сильное внутреннее свечение */
-            transform: translateY(-2px) scale(1.01); /* Немного поднимается и чуть увеличивается */
+                0 0 20px rgba(167, 215, 249, 0.8) inset;
+            transform: translateY(-2px) scale(1.01);
         }
         
         .metal-effect:active {
              transform: translateY(0) scale(0.98);
         }
 
-        /* --- Специфический эффект для карточек в сетке --- */
         .card-item:hover {
-            box-shadow: 
-                0 10px 30px rgba(0, 0, 0, 0.2), /* Более выраженная тень */
-                0 0 30px rgba(167, 215, 249, 1); /* Свечение светло-голубого цвета */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 0 30px rgba(167, 215, 249, 1);
             border-color: rgba(167, 215, 249, 1);
-            transform: translateY(-5px) scale(1.02); /* Чуть больше поднимается и увеличивается */
+            transform: translateY(-5px) scale(1.02);
         }
 
-        .card-item:active {
-            transform: translateY(0) scale(0.98); /* Эффект "нажатия" - вдавливание */
-            box-shadow: 
-                0 2px 5px rgba(0, 0, 0, 0.1),
-                0 0 10px rgba(167, 215, 249, 0.5); /* Более мягкое свечение при нажатии */
-            border-color: rgba(167, 215, 249, 0.5);
-        }
-        /* -------------------------------------------------------- */
-        
-        /* Анимация появления карточек в сетке */
         .card-enter {
             animation: fadeInSlideUp 0.6s ease-out forwards;
             opacity: 0;
         }
         
         @keyframes fadeInSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         dialog::backdrop {
@@ -89,105 +68,45 @@
         }
 
         @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.2); 
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+            width: 36px; height: 36px; border-radius: 50%;
             border-left-color: #4A90E2;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .ingredient-button {
             color: #4A90E2;
             font-weight: 600;
             text-decoration: underline;
             cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            text-align: left;
-            display: inline;
+            background: none; border: none; padding: 0;
+            text-align: left; display: inline;
         }
-        .ingredient-button:hover {
-            color: #0056b3;
-        }
+        .ingredient-button:hover { color: #0056b3; }
 
-        #modalIngredientsList, #modalStepsList {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .close-button {
-            background-color: rgba(255, 255, 255, 0.8);
-            color: #333;
-            transition: all 0.2s;
-        }
-        .close-button:hover {
-            background-color: #4A90E2;
-            color: white;
-            transform: rotate(90deg);
-        }
-        
-        /* Стиль для кнопки Назад */
         .back-button {
             background-color: rgba(255, 255, 255, 0.8);
-            color: #555;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
+            color: #555; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
         }
-        .back-button:hover {
-            background-color: #4A90E2;
-            color: white;
-            transform: translateX(-3px); /* Анимация движения влево */
-        }
+        .back-button:hover { background-color: #4A90E2; color: white; transform: translateX(-3px); }
         
-        /* Спец стиль для заметок в рецепте */
-        .recipe-note {
-            color: #666;
-            font-style: italic;
-            font-size: 0.95em;
-            margin-top: -0.25rem;
-            margin-bottom: 0.5rem;
-            padding-left: 1.5rem;
-        }
+        .recipe-note { color: #666; font-style: italic; font-size: 0.95em; padding-left: 1.5rem; }
 
-        /* Стиль кнопок выбора вариации */
         .variation-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: all 0.2s;
-            border: 1px solid #e5e7eb;
-            background-color: #f3f4f6;
-            color: #4b5563;
-            white-space: nowrap;
-        }
-        .variation-btn:hover {
-            background-color: #e5e7eb;
+            padding: 0.5rem 1rem; border-radius: 9999px;
+            font-size: 0.875rem; font-weight: 600;
+            transition: all 0.2s; border: 1px solid #e5e7eb;
+            background-color: #f3f4f6; color: #4b5563; white-space: nowrap;
         }
         .variation-btn.active {
-            background-color: #4A90E2;
-            color: white;
-            border-color: #4A90E2;
+            background-color: #4A90E2; color: white; border-color: #4A90E2;
             box-shadow: 0 2px 5px rgba(74, 144, 226, 0.3);
         }
     </style>
@@ -199,16 +118,13 @@
         <p class="text-gray-500 mt-2">Интерактивный каталог с переходами между составными частями.</p>
     </header>
 
-    <!-- Панель управления -->
     <div class="flex flex-col sm:flex-row justify-center items-center mb-4 gap-4 max-w-3xl mx-auto">
         <select id="categoryFilter" class="w-full sm:w-1/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300">
             <option value="">Все Категории</option>
         </select>
-        
-        <input type="text" id="searchBar" placeholder="🔍 Поиск..." 
-               class="w-full sm:w-2/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300 placeholder-gray-500">
+        <input type="text" id="searchBar" placeholder="🔍 Поиск..." class="w-full sm:w-2/3 p-4 text-lg text-gray-800 metal-effect focus:outline-none focus:ring-2 focus:ring-blue-300 placeholder-gray-500">
     </div>
-    <!-- Счетчик -->
+
     <div class="text-center mb-8 text-sm text-gray-500">
         <span id="itemsCount">Загрузка...</span>
     </div>
@@ -220,48 +136,30 @@
         </div>
     </div>
     
-    <!-- Сетка -->
-    <div id="cardGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl mx-auto">
-    </div>
+    <div id="cardGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl mx-auto"></div>
     
     <dialog id="recipeModal" class="p-0 rounded-2xl metal-effect w-11/12 max-w-2xl lg:max-w-3xl mx-auto overflow-hidden">
         <div class="p-6 sm:p-8 bg-white/50 max-h-[95vh] overflow-y-auto">
-            
-            <!-- Заголовок и навигация -->
             <div class="flex justify-between items-start mb-2 gap-4">
                 <div class="flex items-center gap-3 flex-grow">
-                    <button id="modalBackButton" onclick="goBack()" 
-                            class="hidden back-button metal-effect rounded-full w-10 h-10 flex-shrink-0 font-bold"
-                            title="Назад">
-                        &#8592;
-                    </button>
+                    <button id="modalBackButton" onclick="goBack()" class="hidden back-button metal-effect rounded-full w-10 h-10 flex-shrink-0 font-bold" title="Назад">&#8592;</button>
                     <h2 id="modalName" class="text-3xl font-extrabold text-gray-700 drop-shadow-md leading-tight" style="text-shadow: 0 0 5px #FFFFFF;"></h2>
                 </div>
-                
-                <button onclick="document.getElementById('recipeModal').close()" 
-                        class="close-button text-2xl font-bold p-2 metal-effect rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
-                    &times;
-                </button>
+                <button onclick="document.getElementById('recipeModal').close()" class="text-2xl font-bold p-2 metal-effect rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 hover:bg-red-400 hover:text-white transition-colors">&times;</button>
             </div>
             
-            <!-- КОНТЕЙНЕР ДЛЯ ВАРИАЦИЙ -->
             <div id="variationContainer" class="flex flex-wrap gap-2 mb-6 hidden"></div>
 
             <div class="flex flex-col lg:flex-row gap-6">
-                
                 <div class="lg:w-1/3 flex flex-col items-center p-4 metal-effect flex-shrink-0">
                     <p id="modalVolume" class="text-lg text-gray-700 font-semibold mb-3"></p> 
-                    <img id="modalImage" src="" alt="Фото напитка" 
-                        class="rounded-lg object-contain w-full h-auto max-h-[70vh] border-2 border-gray-300/50" 
-                        onerror="this.onerror=null; this.src='https://placehold.co/300x400/FFFFFF/666666?text=Нет+Фото';" />
+                    <img id="modalImage" src="" alt="Фото напитка" class="rounded-lg object-contain w-full h-auto max-h-[70vh] border-2 border-gray-300/50" onerror="this.onerror=null; this.src='https://placehold.co/300x400/FFFFFF/666666?text=Нет+Фото';" />
                 </div>
-                
                 <div class="lg:w-2/3 space-y-6">
                     <div class="p-4 metal-effect">
                         <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b pb-2 border-gray-300/50">Ингредиенты:</h3>
                         <ul id="modalIngredientsList" class="space-y-2 text-gray-700"></ul>
                     </div>
-                    
                     <div class="p-4 metal-effect">
                         <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b pb-2 border-gray-300/50">Технология Приготовления:</h3>
                         <ul id="modalStepsList" class="space-y-3 text-gray-700"></ul>
@@ -275,12 +173,11 @@
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ukbh5K5GdykFFCDj-H0xUODUAneKWmbeJFfe4tLTCMEWKJgCkefhrCOtsKDB_QRRYySAvI1xOTh3/pub?gid=1617440067&single=true&output=csv";
         
         let allCardData = [];
-        let groupedCardData = []; // Сгруппированные данные
-        const cardDataMap = new Map();
+        let groupedCardData = [];
+        const ingredientLookupMap = new Map();
         
-        // --- ПЕРЕМЕННЫЕ ДЛЯ ИСТОРИИ НАВИГАЦИИ ---
         let modalHistory = []; 
-        let currentModalGroup = null; // Теперь храним группу (массив карточек)
+        let currentModalGroup = null; 
         
         const cardGrid = document.getElementById('cardGrid');
         const searchBar = document.getElementById('searchBar');
@@ -292,673 +189,331 @@
         const itemsCountLabel = document.getElementById('itemsCount');
         const variationContainer = document.getElementById('variationContainer');
 
-        const sampleData = [
-            {
-                'название': 'Тайгер Шугар Тёплый',
-                'объём': '400',
-                'категория': 'Бабл Ти',
-                'состав': 'Молоко, сахар', 
-                'рецепт': 'Нагреть.', 
-                'фото': 'https://placehold.co/400x600/FFFFFF/666666?text=Тайгер+Теплый' 
-            },
-            {
-                'название': 'Тайгер Шугар Холодный',
-                'объём': '400',
-                'категория': 'Бабл Ти',
-                'состав': 'Молоко, сахар, лед',
-                'рецепт': 'Взбить.',
-                'фото': 'https://placehold.co/400x600/E0E0E0/666666?text=Тайгер+Холодный' 
-            },
-            {
-                'название': 'Айс Латте',
-                'объём': '300',
-                'категория': 'Кофе',
-                'состав': 'Эспрессо, молоко, лед',
-                'рецепт': 'Взбить',
-                'фото': 'https://placehold.co/400x600/E0E0E0/666666?text=Айс+Латте' 
-            },
-            {
-                'название': 'Айс Латте Банан',
-                'объём': '300',
-                'категория': 'Кофе',
-                'состав': 'Эспрессо, молоко, сироп банан',
-                'рецепт': 'Взбить',
-                'фото': 'https://placehold.co/400x600/E0E0E0/666666?text=Айс+Латте+Банан' 
-            }
-        ];
+        function normalizeStr(str) {
+            if (!str) return "";
+            return str.toLowerCase()
+                      .replace(/\u00A0/g, ' ') 
+                      .replace(/\s+/g, ' ')    
+                      .trim();
+        }
 
-        // --- CSV ПАРСЕР ---
+        // Вспомогательная функция для принудительной большой буквы в начале
+        function ensureFirstLetterUpper(str) {
+            if (!str) return "";
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Улучшенная функция капитализации для кириллицы
+        function capitalizeWords(str) {
+            if (!str) return "";
+            return str.split(' ').map(word => {
+                if (word.length === 0) return "";
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
+        }
+
+        function getCleanName(name, category) {
+            if (!name) return "";
+            
+            const suffixesToRemove = [
+                'теплый', 'тёплый', 'холодный', 'горячий', 'warm', 'hot', 'cold', 'ice', 'cool',
+                'без пф', 'с пф', 'б/пф', 'no pf', 'большой', 'средний', 'маленький',
+                'классический', 'классика', 'оригинал',
+                'зерно', 'экстракт', 'grain', 'extract',
+                'пинч', 'с сиропом', 'сироп'
+            ];
+            
+            let clean = name.toLowerCase().replace(/\(.*\)/g, '').replace(/\[.*\]/g, '');
+            clean = clean.replace(/\s+\d+([.,]\d+)?\s*(мл|ml|гр|gr|г|л)?\s*$/i, '');
+            
+            suffixesToRemove.forEach(word => {
+                const regex = new RegExp(`(^|\\s)${word}(\\s|$)`, 'gi');
+                clean = clean.replace(regex, ' ');
+            });
+            
+            clean = clean.replace(/\s+/g, ' ').trim().replace(/[-:]$/, '').trim();
+            
+            return clean.length < 2 ? name.trim() : clean;
+        }
+
+        function buildLookupMap() {
+            ingredientLookupMap.clear();
+            groupedCardData.forEach(groupObj => {
+                const commonNorm = normalizeStr(groupObj.commonName);
+                if (commonNorm.length >= 3) {
+                    ingredientLookupMap.set(commonNorm, groupObj);
+                }
+                groupObj.cards.forEach(card => {
+                    const nameNorm = normalizeStr(card['название']);
+                    if (nameNorm.length >= 3) {
+                        ingredientLookupMap.set(nameNorm, groupObj);
+                    }
+                });
+            });
+        }
+
+        function groupCards(data) {
+            const groupsMap = new Map();
+            data.forEach(card => {
+                const name = card['название'];
+                const category = card['категория'];
+                
+                const cleanKey = getCleanName(name, category).toLowerCase();
+                const mapKey = `${category.toLowerCase()}|${cleanKey}`;
+                
+                if (!groupsMap.has(mapKey)) {
+                    groupsMap.set(mapKey, {
+                        commonName: capitalizeWords(cleanKey), 
+                        cards: []
+                    });
+                }
+                groupsMap.get(mapKey).cards.push(card);
+            });
+            return Array.from(groupsMap.values()).sort((a, b) => a.commonName.localeCompare(b.commonName));
+        }
+
         function parseCSVRobust(text, delimiter = ',') {
             const rows = [];
             let currentRow = [];
             let currentField = '';
             let inQuotes = false;
-            
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];
                 const nextChar = text[i + 1];
-                
                 if (char === '"') {
-                    if (inQuotes && nextChar === '"') {
-                        currentField += '"';
-                        i++; 
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (char === delimiter && !inQuotes) {
-                    currentRow.push(currentField);
-                    currentField = '';
-                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    if (inQuotes && nextChar === '"') { currentField += '"'; i++; }
+                    else { inQuotes = !inQuotes; }
+                } else if (char === delimiter && !inQuotes) { currentRow.push(currentField); currentField = ''; }
+                else if ((char === '\n' || char === '\r') && !inQuotes) {
                     if (char === '\r' && nextChar === '\n') i++; 
-                    currentRow.push(currentField);
-                    rows.push(currentRow);
-                    currentRow = [];
-                    currentField = '';
-                } else {
-                    currentField += char;
-                }
+                    currentRow.push(currentField); rows.push(currentRow); currentRow = []; currentField = '';
+                } else { currentField += char; }
             }
-            if (currentField || currentRow.length > 0) {
-                currentRow.push(currentField);
-                rows.push(currentRow);
-            }
+            if (currentField || currentRow.length > 0) { currentRow.push(currentField); rows.push(currentRow); }
             return rows;
         }
 
-        // --- Умный парсер для состава ---
         function parseSmartIngredients(rawIngredients, currentVolume) {
-            let unit = 'мл'; 
-            let volume = currentVolume;
-            
+            let unit = 'мл', volume = currentVolume;
             if (rawIngredients) {
-                const volumeMatch = rawIngredients.match(/((?:Объем|Объём|Вес).*?)(\d+(?:[.,]\d+)?)/i);
-                if (volumeMatch) {
-                    const context = volumeMatch[1].toLowerCase();
-                    const val = volumeMatch[2];
-                    if (context.includes('гр') || context.includes('г.') || context.includes(' g') || context.includes(' gr')) {
-                        unit = 'гр';
-                    } else if (context.includes('мл') || context.includes('ml')) {
-                        unit = 'мл';
-                    } else if (context.includes('вес')) {
-                        unit = 'гр'; 
-                    } else {
-                        unit = 'мл'; 
-                    }
-                    volume = val;
+                const volMatch = rawIngredients.match(/((?:Объем|Объём|Вес).*?)(\d+(?:[.,]\d+)?)/i);
+                if (volMatch) {
+                    const ctx = volMatch[1].toLowerCase();
+                    if (ctx.includes('гр') || ctx.includes('г.') || ctx.includes('вес')) unit = 'гр';
+                    volume = volMatch[2];
                 }
             }
-
             if (!rawIngredients) return { cleanIngredients: '', extractedVolume: currentVolume, extractedUnit: 'мл' };
-
             let cleanText = rawIngredients.replace(/(?:Объем|Объём|Вес).*?(\d+(?:[.,]\d+)?).*$/gmi, '');
-            let lines = cleanText.split(/[\n;]+/);
-            
-            let processedLines = lines.map(line => {
-                let l = line.trim();
-                if (!l) return null;
-                l = l.replace(/^(\d+)([а-яА-Яa-zA-Z])/u, '$1. $2');
-                l = l.replace(/([а-яА-Яa-zA-Z])\s*(гр|г|мл|л|gr|g|ml|l)\.?\s*(\d+(?:[.,]\d+)?)/giu, '$1 - $3$2');
-                return l;
-            }).filter(l => l); 
-
-            return {
-                cleanIngredients: processedLines.join('; '), 
-                extractedVolume: volume,
-                extractedUnit: unit
-            };
-        }
-
-        function parseSmartRecipe(rawRecipe) {
-            if (!rawRecipe) return '';
-            let lines = rawRecipe.split(/[\n;]+/);
-            let processedLines = lines.map(line => {
-                let l = line.trim();
-                if (!l) return null;
-                l = l.replace(/^(\d+)\.([^\s])/u, '$1. $2');
-                l = l.replace(/^(\d)([а-яА-Яa-zA-Z])/u, '$1. $2');
-                return l;
+            let lines = cleanText.split(/[\n;]+/).map(l => {
+                let s = l.trim().replace(/\u00A0/g, ' '); 
+                if (!s) return null;
+                s = s.replace(/^(\d+)([а-яА-Яa-zA-Z])/u, '$1. $2');
+                s = s.replace(/([а-яА-Яa-zA-Z])\s*(гр|г|мл|л|gr|g|ml|l)\.?\s*(\d+(?:[.,]\d+)?)/giu, '$1 - $3$2');
+                return s;
             }).filter(l => l);
-            return processedLines.join('\n');
-        }
-
-        // --- НОВАЯ СИСТЕМА ГРУППИРОВКИ (Очистка имени) ---
-        function getCleanName(name, category) {
-            if (!name) return "";
-            
-            const nameLower = name.toLowerCase();
-            const categoryLower = category ? category.toLowerCase() : "";
-            
-            // 3. ИСКЛЮЧЕНИЕ КАТЕГОРИИ КОФЕ
-            // Если категория Кофе или Coffee, мы НЕ ЧИСТИМ имя от добавок.
-            // Возвращаем оригинал (в нижнем регистре для группировки дублей, но не вариаций)
-            if (categoryLower.includes('кофе') || categoryLower.includes('coffee')) {
-                return name.trim();
-            }
-
-            // Список слов-паразитов для группировки. 
-            // Это слова, которые "не меняют суть" напитка, а только его состояние.
-            // "Банан" или "Клубника" СЮДА НЕ ВХОДЯТ (поэтому Айс Латте Банан останется собой)
-            const suffixesToRemove = [
-                'теплый', 'тёплый', 'холодный', 'горячий', 
-                'warm', 'hot', 'cold', 'ice', 'cool',
-                'без пф', 'с пф', 'б/пф', 'no pf',
-                'большой', 'средний', 'маленький',
-                'классический', 'классика', 'оригинал'
-            ];
-            
-            // Также удаляем объемы (300мл, 0.4 и т.д.)
-            // И содержимое скобок (...)
-            
-            let clean = nameLower;
-
-            // 1. Удаляем скобки и все внутри
-            clean = clean.replace(/\(.*\)/g, '');
-            clean = clean.replace(/\[.*\]/g, '');
-
-            // 2. Удаляем объемы в конце (например " 300мл", " 0,5")
-            clean = clean.replace(/\s+\d+([.,]\d+)?\s*(мл|ml|гр|gr|г|л)?\s*$/i, '');
-
-            // 3. Удаляем слова из списка (только если они в конце или отдельные слова)
-            suffixesToRemove.forEach(word => {
-                // Регулярка ищет слово, перед которым пробел (или начало строки)
-                const regex = new RegExp(`(^|\\s)${word}(\\s|$)`, 'gi');
-                clean = clean.replace(regex, ' ');
-            });
-
-            // Чистим хвосты и лишние пробелы
-            clean = clean.replace(/\s+/g, ' ').trim();
-            
-            // Убираем знаки препинания в конце
-            clean = clean.replace(/[-:]$/, '').trim();
-
-            // Если удалили вообще всё, возвращаем оригинал
-            if (clean.length < 2) return name.trim();
-            
-            return clean; // Возвращаем название в оригинальном регистре для красоты? Нет, лучше как есть
-        }
-
-        // Вспомогательная функция для красивого отображения имени группы (делает первые буквы заглавными)
-        function capitalizeWords(str) {
-            return str.replace(/\b\w/g, l => l.toUpperCase());
-        }
-
-        function groupCards(data) {
-            const groupsMap = new Map();
-            
-            data.forEach(card => {
-                const name = card['название'];
-                const category = card['категория'];
-                
-                // Получаем "чистое имя" (ключ группировки)
-                // Для Кофе оно вернет полное имя ("айс латте банан"), для Бабл Ти - чистое ("тайгер шугар")
-                const cleanNameKey = getCleanName(name, category).toLowerCase();
-                
-                // Формируем уникальный ключ: Категория + Чистое имя
-                const mapKey = `${category.toLowerCase()}|${cleanNameKey}`;
-                
-                if (!groupsMap.has(mapKey)) {
-                    // Пытаемся сделать красивое имя для отображения группы
-                    // Берем cleanNameKey и делаем первые буквы заглавными, или берем имя первой карты если оно совпадает
-                    let displayGroupName = capitalizeWords(cleanNameKey);
-                    
-                    groupsMap.set(mapKey, {
-                        commonName: displayGroupName, 
-                        cards: []
-                    });
-                }
-                
-                groupsMap.get(mapKey).cards.push(card);
-            });
-            
-            // Превращаем Map обратно в массив и сортируем
-            return Array.from(groupsMap.values())
-                .sort((a, b) => a.commonName.localeCompare(b.commonName));
-        }
-        
-        function csvToObjectArray(csvText) {
-            const firstLineEnd = csvText.indexOf('\n');
-            const firstLine = csvText.substring(0, firstLineEnd > -1 ? firstLineEnd : csvText.length);
-            
-            let delimiter = ',';
-            if ((firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length) {
-                delimiter = ';';
-            } else if ((firstLine.match(/\|/g) || []).length > (firstLine.match(/,/g) || []).length) {
-                delimiter = '|';
-            }
-
-            const rows = parseCSVRobust(csvText, delimiter);
-
-            if (rows.length < 2) return [];
-            
-            const rawHeaders = rows[0];
-            const headers = rawHeaders.map(h => h.toLowerCase().trim().replace(/^\ufeff/, ''));
-            
-            const requiredHeaders = ['название', 'состав', 'рецепт', 'объём', 'фото'];
-            const missingCriticalHeaders = requiredHeaders.filter(h => !headers.includes(h));
-            
-            if (missingCriticalHeaders.length > 0) {
-                document.getElementById('statusIndicator').innerHTML = `КРИТИЧЕСКАЯ ОШИБКА: Нет колонок ${missingCriticalHeaders.join(', ')}`;
-                return [];
-            }
-            
-            const data = [];
-            const categoryIndex = headers.indexOf('категория');
-
-            for (let i = 1; i < rows.length; i++) {
-                const values = rows[i];
-                if (values.length === 0 || (values.length === 1 && values[0] === '')) continue;
-
-                const obj = {};
-                headers.forEach((header, index) => {
-                    obj[header] = (index < values.length) ? values[index].trim() : "";
-                });
-                
-                if (categoryIndex === -1) obj['категория'] = 'Без Категории';
-
-                if (obj['название'] && obj['название'].trim() !== '') {
-                    const smartIngredients = parseSmartIngredients(obj['состав'], obj['объём']);
-                    obj['состав'] = smartIngredients.cleanIngredients;
-                    
-                    if ((!obj['объём'] || obj['объём'].trim() === '' || obj['объём'] === '-') && smartIngredients.extractedVolume) {
-                        obj['объём'] = smartIngredients.extractedVolume;
-                    }
-                    
-                    obj['единица'] = smartIngredients.extractedUnit;
-                    obj['рецепт'] = parseSmartRecipe(obj['рецепт']);
-                    data.push(obj);
-                }
-            }
-            return data;
+            return { cleanIngredients: lines.join('; '), extractedVolume: volume, extractedUnit: unit };
         }
 
         function renderGrid(groups) {
             cardGrid.innerHTML = '';
-            if (groups.length > 0 && !statusIndicator.innerHTML.includes("демонстрационные данные")) {
-                statusIndicator.innerHTML = ''; 
-            }
-            
-            if (groups.length === 0) {
-                statusIndicator.innerHTML = "<p class='text-gray-600 font-medium'>Ничего не найдено.</p>";
-                itemsCountLabel.textContent = "Найдено: 0";
-                return;
-            }
-            
+            if (groups.length > 0) statusIndicator.innerHTML = '';
             itemsCountLabel.textContent = `Показано позиций: ${groups.length}`;
-
             groups.forEach((groupObj, index) => {
-                const groupName = groupObj.commonName; 
-                const cards = groupObj.cards;
-                const mainCard = cards[0]; 
-                
+                const mainCard = groupObj.cards[0];
                 const cardElement = document.createElement('div');
-                cardElement.className = "metal-effect p-3 overflow-hidden cursor-pointer flex flex-col items-center text-center card-item"; 
-                cardElement.classList.add('card-enter');
-                cardElement.style.animationDelay = `${index * 0.05}s`; 
-
-                let badge = '';
-                if (cards.length > 1) {
-                    badge = `<span class="absolute top-2 right-2 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-10">${cards.length} вар.</span>`;
-                }
-
+                cardElement.className = "metal-effect p-3 overflow-hidden cursor-pointer flex flex-col items-center text-center card-item card-enter";
+                cardElement.style.animationDelay = `${index * 0.05}s`;
+                let badge = groupObj.cards.length > 1 ? `<span class="absolute top-2 right-2 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-10">${groupObj.cards.length} вар.</span>` : '';
                 cardElement.innerHTML = `
                     <div class="relative w-full h-24 mb-2">
                         ${badge}
                         <div class="w-full h-full rounded-lg border-2 border-gray-200 bg-white flex items-center justify-center overflow-hidden">
-                            <img src="${mainCard['фото'] || 'https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'}" 
-                                    alt="${groupName}" 
-                                    class="w-full h-full object-contain" 
-                                    onerror="this.onerror=null; this.src='https://placehold.co/300x200/CCCCCC/666666?text=Нет+Фото';" />
+                            <img src="${mainCard['фото'] || 'https://placehold.co/300x200/FFFFFF/666666?text=Нет+Фото'}" alt="${groupObj.commonName}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/300x200/CCCCCC/666666?text=Нет+Фото';" />
                         </div>
                     </div>
-                    <h3 class="text-sm font-semibold text-gray-700 drop-shadow-sm w-full leading-tight mb-1">
-                        ${groupName || 'Без названия'}
-                    </h3>
-                    <p class="text-xs text-gray-500 mt-1 mb-1">${mainCard['категория'] || 'Без Категории'}</p>
-                    <p class="text-sm text-gray-600 drop-shadow-sm">${mainCard['объём'] || '?'} ${mainCard['единица'] || 'мл'}</p>
-                `;
-                
-                cardElement.addEventListener('click', () => {
-                    modalHistory = [];
-                    openModal(groupObj);
-                });
+                    <h3 class="text-sm font-semibold text-gray-700 w-full leading-tight mb-1">${groupObj.commonName}</h3>
+                    <p class="text-xs text-gray-500 mt-1 mb-1">${mainCard['категория']}</p>
+                    <p class="text-sm text-gray-600">${mainCard['объём'] || '?'} ${mainCard['единица'] || 'мл'}</p>`;
+                cardElement.addEventListener('click', () => { modalHistory = []; openModal(groupObj); });
                 cardGrid.appendChild(cardElement);
             });
         }
-        
-        function escapeRegExp(string) {
-            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        }
 
-        // Обновленная функция линковки
+        function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
         function createLinkedIngredientElements(text) {
             let parts = [{ text: text, group: null }];
-            
-            const lookupMap = new Map();
-            
-            groupedCardData.forEach(groupObj => {
-                if (groupObj.commonName && groupObj.commonName.length >= 3) {
-                    lookupMap.set(groupObj.commonName.toLowerCase().trim(), groupObj);
-                }
-                groupObj.cards.forEach(card => {
-                     if (card['название'] && card['название'].length >= 3) {
-                        lookupMap.set(card['название'].toLowerCase().trim(), groupObj);
-                    }
-                });
-            });
+            const sortedSearchNames = Array.from(ingredientLookupMap.keys()).sort((a, b) => b.length - a.length);
 
-            const sortedNames = Array.from(lookupMap.keys()).sort((a, b) => b.length - a.length);
-
-            for (const dbName of sortedNames) {
+            for (const searchName of sortedSearchNames) {
                 const newParts = [];
                 for (const part of parts) {
-                    if (part.group) {
-                        newParts.push(part);
-                        continue;
-                    }
-                    const regex = new RegExp(`(${escapeRegExp(dbName)})`, 'gi');
+                    if (part.group) { newParts.push(part); continue; }
+                    const regex = new RegExp(`(${escapeRegExp(searchName)})`, 'gi');
                     const splitArr = part.text.split(regex);
                     if (splitArr.length > 1) {
                         for (let i = 0; i < splitArr.length; i++) {
                             const chunk = splitArr[i];
                             if (!chunk) continue;
-                            if (chunk.toLowerCase() === dbName) {
-                                newParts.push({ text: chunk, group: lookupMap.get(dbName) });
-                            } else {
-                                newParts.push({ text: chunk, group: null });
-                            }
+                            if (normalizeStr(chunk) === searchName) { newParts.push({ text: chunk, group: ingredientLookupMap.get(searchName) }); }
+                            else { newParts.push({ text: chunk, group: null }); }
                         }
-                    } else {
-                        newParts.push(part);
-                    }
+                    } else { newParts.push(part); }
                 }
                 parts = newParts;
             }
             
             const fragment = document.createDocumentFragment();
-            let foundAnyLink = false;
-
             parts.forEach(part => {
                 if (part.group) {
-                    foundAnyLink = true;
                     const btn = document.createElement('button');
                     btn.className = 'ingredient-button';
-                    btn.textContent = part.text; 
-                    btn.onclick = (e) => {
-                        e.stopPropagation();
-                        if (currentModalGroup) modalHistory.push(currentModalGroup);
-                        openModal(part.group);
-                    };
+                    btn.textContent = ensureFirstLetterUpper(part.text); 
+                    btn.onclick = (e) => { e.stopPropagation(); if (currentModalGroup) modalHistory.push(currentModalGroup); openModal(part.group); };
                     fragment.appendChild(btn);
-                } else {
-                    fragment.appendChild(document.createTextNode(part.text));
-                }
+                } else { fragment.appendChild(document.createTextNode(part.text)); }
             });
-
-            if (!foundAnyLink) {
-                 const cleanName = text.toLowerCase().trim();
-                 for (const dbName of sortedNames) {
-                     if (dbName.includes(cleanName)) {
-                         const group = lookupMap.get(dbName);
-                         while(fragment.firstChild) fragment.removeChild(fragment.firstChild);
-                         const btn = document.createElement('button');
-                         btn.className = 'ingredient-button';
-                         btn.textContent = text; 
-                         btn.onclick = (e) => {
-                            e.stopPropagation();
-                            if (currentModalGroup) modalHistory.push(currentModalGroup);
-                            openModal(group);
-                         };
-                         fragment.appendChild(btn);
-                         return fragment;
-                     }
-                 }
-            }
             return fragment;
         }
 
-        function goBack() {
-            if (modalHistory.length > 0) {
-                const prevGroup = modalHistory.pop();
-                openModal(prevGroup);
-            }
-        }
+        function goBack() { if (modalHistory.length > 0) openModal(modalHistory.pop()); }
 
         function updateModalContent(card) {
-            document.getElementById('modalName').textContent = card['название'] || 'Без названия';
-            
+            document.getElementById('modalName').textContent = card['название'];
             const unit = card['единица'] || 'мл';
-            const label = unit === 'гр' ? 'Вес:' : 'Объем:';
-            document.getElementById('modalVolume').textContent = `${label} ${card['объём'] || '?'} ${unit}`; 
-            
-            const modalImage = document.getElementById('modalImage');
-            modalImage.src = card['фото'] || '';
+            document.getElementById('modalVolume').textContent = `${unit === 'гр' ? 'Вес:' : 'Объем:'} ${card['объём'] || '?'} ${unit}`; 
+            document.getElementById('modalImage').src = card['фото'] || '';
             
             const ingredientsListEl = document.getElementById('modalIngredientsList');
             ingredientsListEl.innerHTML = '';
-            
             const ingredients = card['состав'] ? card['состав'].split(/[;\r?\n]+/).filter(item => item.trim() !== '') : [];
-            
             ingredients.forEach(item => {
-                const cleanItem = item.trim(); 
-                if (!cleanItem) return;
-
                 const li = document.createElement('li');
                 li.className = "text-gray-700";
-
-                const match = cleanItem.match(/^([\d.,\s\w]+\s*)?([^:;-]+)([:;-].*)?$/); 
-
-                let prefix = '';
-                let ingredientName = cleanItem;
-                let suffix = '';
-                
+                const match = item.match(/^([\d.,\s\w]+\s*)?([^:;-]+)([:;-].*)?$/); 
                 if (match) {
-                    prefix = match[1] || '';
-                    ingredientName = match[2] ? match[2].trim() : cleanItem; 
-                    suffix = match[3] || '';
-                } 
-                if (prefix) li.appendChild(document.createTextNode(prefix));
-                const contentFragment = createLinkedIngredientElements(ingredientName);
-                li.appendChild(contentFragment);
-                if (suffix) li.appendChild(document.createTextNode(suffix));
-                
+                    if (match[1]) li.appendChild(document.createTextNode(match[1]));
+                    li.appendChild(createLinkedIngredientElements(match[2].trim()));
+                    if (match[3]) li.appendChild(document.createTextNode(match[3]));
+                } else { li.appendChild(createLinkedIngredientElements(item)); }
                 ingredientsListEl.appendChild(li);
             });
 
             const stepsListEl = document.getElementById('modalStepsList');
             stepsListEl.innerHTML = '';
             const steps = card['рецепт'] ? card['рецепт'].split(/[;\r?\n]+/).filter(step => step.trim() !== '') : [];
-            
             steps.forEach(step => {
-                const cleanStep = step.trim(); 
-                if (cleanStep) {
-                    const li = document.createElement('li');
-                    if (cleanStep.startsWith('(')) {
-                        li.textContent = cleanStep;
-                        li.className = "recipe-note"; 
-                    } else if (!cleanStep.match(/^[\d.]+\s/)) {
-                         li.innerHTML = `&bull; ${cleanStep}`;
-                         li.className = "text-gray-700"; 
-                    } else {
-                        li.textContent = cleanStep;
-                        li.className = "text-gray-700"; 
-                    }
-                    stepsListEl.appendChild(li);
+                const li = document.createElement('li');
+                if (step.trim().startsWith('(')) { li.textContent = step; li.className = "recipe-note"; }
+                else { 
+                    li.innerHTML = step.match(/^[\d.]+\s/) ? step : `&bull; ${step}`; 
+                    li.className = "text-gray-700"; 
                 }
+                stepsListEl.appendChild(li);
             });
         }
 
         function openModal(groupObj) {
-            if (!groupObj || !groupObj.cards || groupObj.cards.length === 0) return;
+            if (!groupObj) return;
             currentModalGroup = groupObj;
-
-            if (modalHistory.length > 0) {
-                modalBackButton.classList.remove('hidden');
-            } else {
-                modalBackButton.classList.add('hidden');
-            }
-
-            const cards = groupObj.cards;
-            const commonName = groupObj.commonName;
-
-            // Очистка и создание кнопок вариаций
+            modalBackButton.classList.toggle('hidden', modalHistory.length === 0);
             variationContainer.innerHTML = '';
             
-            if (cards.length > 1) {
+            if (groupObj.cards.length > 1) {
                 variationContainer.classList.remove('hidden');
-                
-                cards.forEach((card, index) => {
+                groupObj.cards.forEach((card, idx) => {
                     const btn = document.createElement('button');
                     btn.className = 'variation-btn';
                     
-                    // Пытаемся сформировать краткое имя кнопки
-                    let btnText = card['название'];
+                    let btnText = card['название'].replace(new RegExp('^' + escapeRegExp(groupObj.commonName), 'i'), '').trim();
+                    btnText = btnText.replace(/^[\s\(\)-]+|[\s\)]+$/g, '');
                     
-                    // Экранируем спецсимволы в общем имени для regex
-                    const escapedCommon = commonName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const regexCommon = new RegExp('^' + escapedCommon, 'i');
-                    
-                    if (regexCommon.test(btnText)) {
-                        // Отрезаем общее имя из названия кнопки
-                        btnText = btnText.replace(regexCommon, '').trim();
-                        // Убираем возможные скобки или тире
-                        btnText = btnText.replace(/^[\s\(\)-]+|[\s\)]+$/g, '');
-                    }
-
-                    if (btnText.length === 0) {
-                        btnText = "Классика"; 
-                    } else {
-                         // Делаем первую букву заглавной
-                        btnText = btnText.charAt(0).toUpperCase() + btnText.slice(1);
-                    }
-                    
-                    btn.textContent = btnText;
-                    
+                    btn.textContent = btnText.length === 0 ? "Классика" : capitalizeWords(btnText);
                     btn.onclick = () => {
                         document.querySelectorAll('.variation-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        updateModalContent(card);
+                        btn.classList.add('active'); updateModalContent(card);
                     };
-                    
                     variationContainer.appendChild(btn);
                 });
-                
                 variationContainer.firstChild.classList.add('active');
-            } else {
-                variationContainer.classList.add('hidden');
-            }
-
-            updateModalContent(cards[0]);
+            } else { variationContainer.classList.add('hidden'); }
             
+            updateModalContent(groupObj.cards[0]);
             recipeModal.showModal();
         }
 
-        function filterDrinks() {
-            const textQuery = searchBar.value.toLowerCase().trim();
-            const selectedCategory = categoryFilter.value; 
-
-            const filteredGroups = groupedCardData.filter(groupObj => {
-                return groupObj.cards.some(card => {
-                    const name = card['название'] ? card['название'].toLowerCase() : '';
-                    const cardCategory = card['категория'] ? card['категория'].trim() : 'Без Категории'; 
-
-                    const matchesText = !textQuery || name.includes(textQuery);
-                    const matchesCategory = !selectedCategory || cardCategory === selectedCategory;
-                    return matchesText && matchesCategory;
-                });
-            });
-            
-            renderGrid(filteredGroups);
-        }
-
-        function populateCategoryFilter(data) {
-            const categories = new Set();
-            data.forEach(drink => {
-                const category = drink['категория'] ? drink['категория'].trim() : 'Без Категории';
-                if (category) categories.add(category);
-            });
-            categoryFilter.innerHTML = '';
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.textContent = 'Все Категории';
-            categoryFilter.appendChild(defaultOption);
-            const sortedCategories = Array.from(categories).sort();
-            sortedCategories.forEach(category => {
-                const option = document.createElement('option');
-                option.value = category;
-                option.textContent = category;
-                categoryFilter.appendChild(option);
-            });
-        }
-
-        async function loadData() {
-            cardGrid.innerHTML = '';
-            statusIndicator.innerHTML = '';
-            itemsCountLabel.textContent = "Обновление..."; 
-            
-            let fetchSuccess = false;
-
-            if (CSV_URL) {
-                try {
-                    loadingIndicator.classList.remove('hidden');
-                    const response = await retryFetch(CSV_URL); 
-                    const csvText = await response.text();
-                    
-                    allCardData = csvToObjectArray(csvText);
-                    
-                    groupedCardData = groupCards(allCardData);
-                    
-                    fetchSuccess = groupedCardData.length > 0;
-
-                } catch (error) {
-                    console.error(error);
-                    statusIndicator.innerHTML = "Ошибка загрузки"; 
-                    itemsCountLabel.textContent = "Ошибка";
-                }
-            }
-            
-            if (!fetchSuccess) {
-                allCardData = sampleData;
-                groupedCardData = groupCards(allCardData);
-                
-                statusIndicator.innerHTML = `<p class='text-center font-semibold p-4 rounded-xl bg-gray-200/50 border border-gray-300/50 metal-effect mt-8'>
-                                                 ✅ Используются демонстрационные данные
-                                               </p>`;
-            }
-
-            if (groupedCardData.length > 0) {
-                loadingIndicator.classList.add('hidden');
-                if (!statusIndicator.innerHTML.includes("демонстрационные данные")) statusIndicator.innerHTML = ''; 
-                
-                populateCategoryFilter(allCardData);
-                renderGrid(groupedCardData);
-                
-                searchBar.addEventListener('input', filterDrinks);
-                categoryFilter.addEventListener('change', filterDrinks); 
-
-            } else {
-                statusIndicator.innerHTML = "Нет данных";
-                itemsCountLabel.textContent = "Найдено: 0";
-            }
-            loadingIndicator.classList.add('hidden');
-        }
-        
         async function retryFetch(url, retries = 3, delay = 1000) {
-            if (url.includes("!!! ВСТАВЬТЕ СЮДА")) throw new Error("URL не заменен");
             const finalUrl = url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
             for (let i = 0; i < retries; i++) {
                 try {
                     const res = await fetch(finalUrl);
                     if (!res.ok) throw new Error(res.status);
                     return res;
-                } catch (e) {
-                    if (i === retries - 1) throw e;
-                    await new Promise(r => setTimeout(r, delay * (2 ** i)));
-                }
+                } catch (e) { if (i === retries - 1) throw e; await new Promise(r => setTimeout(r, delay * (2 ** i))); }
             }
         }
 
+        async function loadData() {
+            loadingIndicator.classList.remove('hidden');
+            try {
+                const response = await retryFetch(CSV_URL);
+                const csvText = await response.text();
+                const rows = parseCSVRobust(csvText);
+                const headers = rows[0].map(h => h.toLowerCase().trim().replace(/^\ufeff/, ''));
+                
+                allCardData = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const values = rows[i]; if (values.length < 2) continue;
+                    const obj = {}; headers.forEach((h, idx) => obj[h] = values[idx] ? values[idx].trim() : "");
+                    if (!obj['категория']) obj['категория'] = 'Без Категории';
+                    if (obj['название']) {
+                        obj['название'] = ensureFirstLetterUpper(obj['название']);
+                        const smart = parseSmartIngredients(obj['состав'], obj['объём']);
+                        obj['состав'] = smart.cleanIngredients;
+                        obj['объём'] = (!obj['объём'] || obj['объём'] === '-') ? smart.extractedVolume : obj['объём'];
+                        obj['единица'] = smart.extractedUnit;
+                        obj['рецепт'] = parseSmartRecipe(obj['рецепт'] || "");
+                        allCardData.push(obj);
+                    }
+                }
+                groupedCardData = groupCards(allCardData);
+                buildLookupMap();
+                populateCategoryFilter(allCardData);
+                renderGrid(groupedCardData);
+            } catch (e) {
+                console.error(e); statusIndicator.innerHTML = "Ошибка загрузки данных.";
+            } finally { loadingIndicator.classList.add('hidden'); }
+        }
+
+        function populateCategoryFilter(data) {
+            const categories = new Set(data.map(d => d['категория']));
+            categoryFilter.innerHTML = '<option value="">Все Категории</option>';
+            Array.from(categories).sort().forEach(c => {
+                const opt = document.createElement('option'); opt.value = c; opt.textContent = c; categoryFilter.appendChild(opt);
+            });
+        }
+
+        function filterDrinks() {
+            const query = normalizeStr(searchBar.value);
+            const cat = categoryFilter.value;
+            const filtered = groupedCardData.filter(g => g.cards.some(c => 
+                (normalizeStr(c['название']).includes(query) || normalizeStr(g.commonName).includes(query)) && 
+                (!cat || c['категория'] === cat)
+            ));
+            renderGrid(filtered);
+        }
+
+        searchBar.addEventListener('input', filterDrinks);
+        categoryFilter.addEventListener('change', filterDrinks);
         window.onload = loadData;
 
+        function parseSmartRecipe(r) {
+            return r.split(/[\n;]+/).map(l => {
+                let s = l.trim(); if (!s) return null;
+                return s.replace(/^(\d+)\.([^\s])/u, '$1. $2').replace(/^(\d)([а-яА-Яa-zA-Z])/u, '$1. $2');
+            }).filter(l => l).join('\n');
+        }
     </script>
 </body>
 </html>
