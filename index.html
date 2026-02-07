@@ -191,9 +191,10 @@
 
         function normalizeStr(str) {
             if (!str) return "";
+            // Превращаем все тире и дефисы в пробелы для индексации
             return str.toLowerCase()
                       .replace(/\u00A0/g, ' ') 
-                      .replace(/[–—−-]/g, ' ') // Все тире и дефисы превращаем в пробелы для индекса
+                      .replace(/[–—−-]/g, ' ') 
                       .replace(/\s+/g, ' ')    
                       .trim();
         }
@@ -213,7 +214,6 @@
 
         function getCleanName(name, category) {
             if (!name) return "";
-            
             const suffixesToRemove = [
                 'теплый', 'тёплый', 'холодный', 'горячий', 'warm', 'hot', 'cold', 'ice', 'cool',
                 'без пф', 'с пф', 'б/пф', 'no pf', 'большой', 'средний', 'маленький',
@@ -222,17 +222,13 @@
                 'пинч', 'с сиропом', 'сироп',
                 'графин', 'carafe', 'pitcher'
             ];
-            
             let clean = name.toLowerCase().replace(/\(.*\)/g, '').replace(/\[.*\]/g, '');
             clean = clean.replace(/\s+\d+([.,]\d+)?\s*(мл|ml|гр|gr|г|л)?\s*$/i, '');
-            
             suffixesToRemove.forEach(word => {
                 const regex = new RegExp(`(^|\\s)${word}(\\s|$)`, 'gi');
                 clean = clean.replace(regex, ' ');
             });
-            
             clean = clean.replace(/\s+/g, ' ').trim().replace(/[-:]$/, '').trim();
-            
             return clean.length < 2 ? name.trim() : clean;
         }
 
@@ -240,7 +236,7 @@
             ingredientLookupMap.clear();
             groupedCardData.forEach(groupObj => {
                 const nameLower = groupObj.commonName.toLowerCase();
-                // Пропускаем топпинги "т. ..."
+                // Топпинги не регистрируем как цели для ссылок
                 if (nameLower.startsWith('т.') || nameLower.startsWith('т ')) return;
 
                 const namesToRegister = [groupObj.commonName];
@@ -253,7 +249,6 @@
                 namesToRegister.forEach(name => {
                     const norm = normalizeStr(name);
                     if (norm.length >= 3) {
-                        // Сохраняем связь. Если несколько имен ведут к одной группе - это нормально.
                         if (!ingredientLookupMap.has(norm)) {
                             ingredientLookupMap.set(norm, groupObj);
                         }
@@ -267,10 +262,8 @@
             data.forEach(card => {
                 const name = card['название'];
                 const category = card['категория'];
-                
                 const cleanKey = getCleanName(name, category).toLowerCase();
                 const mapKey = `${category.toLowerCase()}|${cleanKey}`;
-                
                 if (!groupsMap.has(mapKey)) {
                     groupsMap.set(mapKey, {
                         commonName: capitalizeWords(cleanKey), 
@@ -280,9 +273,7 @@
                 groupsMap.get(mapKey).cards.push(card);
             });
             const result = Array.from(groupsMap.values()).sort((a, b) => a.commonName.localeCompare(b.commonName));
-            result.forEach(group => {
-                group.cards.sort((a, b) => a['название'].length - b['название'].length);
-            });
+            result.forEach(group => group.cards.sort((a, b) => a['название'].length - b['название'].length));
             return result;
         }
 
@@ -365,7 +356,7 @@
                 for (const part of parts) {
                     if (part.group) { newParts.push(part); continue; }
                     
-                    // Разбиваем поисковое имя на слова и создаем паттерн, допускающий тире или пробелы между ними
+                    // Паттерн: слова разделены любым количеством тире, дефисов или пробелов
                     const words = searchName.split(' ');
                     const pattern = words.map(w => escapeRegExp(w)).join('[-\\s—–−]+');
                     const regex = new RegExp(`(${pattern})`, 'gi');
@@ -375,8 +366,6 @@
                         for (let i = 0; i < splitArr.length; i++) {
                             const chunk = splitArr[i];
                             if (!chunk) continue;
-                            
-                            // Если чанк совпадает с нормализованным ключом или регуляркой - это ссылка
                             if (normalizeStr(chunk) === searchName || regex.test(chunk)) { 
                                 newParts.push({ text: chunk, group: ingredientLookupMap.get(searchName) }); 
                             } else { 
@@ -415,6 +404,14 @@
             ingredients.forEach(item => {
                 const li = document.createElement('li');
                 li.className = "text-gray-700";
+
+                // ЖЕСТКАЯ ПРОВЕРКА: Если строка содержит "т.", отключаем гиперссылки для этой строки
+                if (item.toLowerCase().includes('т.')) {
+                    li.textContent = item;
+                    ingredientsListEl.appendChild(li);
+                    return;
+                }
+
                 const match = item.match(/^([\d.,\s\w]+\s*)?([^:;-]+)([:;-].*)?$/); 
                 if (match) {
                     if (match[1]) li.appendChild(document.createTextNode(match[1]));
@@ -443,7 +440,6 @@
             currentModalGroup = groupObj;
             modalBackButton.classList.toggle('hidden', modalHistory.length === 0);
             variationContainer.innerHTML = '';
-            
             if (groupObj.cards.length > 1) {
                 variationContainer.classList.remove('hidden');
                 groupObj.cards.forEach((card, idx) => {
@@ -460,7 +456,6 @@
                     if (idx === 0) btn.classList.add('active');
                 });
             } else { variationContainer.classList.add('hidden'); }
-            
             updateModalContent(groupObj.cards[0]);
             recipeModal.showModal();
         }
@@ -483,7 +478,6 @@
                 const csvText = await response.text();
                 const rows = parseCSVRobust(csvText);
                 const headers = rows[0].map(h => h.toLowerCase().trim().replace(/^\ufeff/, ''));
-                
                 allCardData = [];
                 for (let i = 1; i < rows.length; i++) {
                     const values = rows[i]; if (values.length < 2) continue;
