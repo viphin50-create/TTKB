@@ -197,13 +197,11 @@
                       .trim();
         }
 
-        // Вспомогательная функция для принудительной большой буквы в начале
         function ensureFirstLetterUpper(str) {
             if (!str) return "";
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
-        // Улучшенная функция капитализации для кириллицы
         function capitalizeWords(str) {
             if (!str) return "";
             return str.split(' ').map(word => {
@@ -215,15 +213,18 @@
         function getCleanName(name, category) {
             if (!name) return "";
             
+            // Расширенный список слов для удаления, чтобы объединить варианты (Лимонады, Графины и т.д.)
             const suffixesToRemove = [
                 'теплый', 'тёплый', 'холодный', 'горячий', 'warm', 'hot', 'cold', 'ice', 'cool',
                 'без пф', 'с пф', 'б/пф', 'no pf', 'большой', 'средний', 'маленький',
                 'классический', 'классика', 'оригинал',
                 'зерно', 'экстракт', 'grain', 'extract',
-                'пинч', 'с сиропом', 'сироп'
+                'пинч', 'с сиропом', 'сироп',
+                'графин', 'carafe', 'pitcher' // Добавлено для группировки лимонадов
             ];
             
             let clean = name.toLowerCase().replace(/\(.*\)/g, '').replace(/\[.*\]/g, '');
+            // Удаляем числовые объемы в конце строки (например, " 400 мл")
             clean = clean.replace(/\s+\d+([.,]\d+)?\s*(мл|ml|гр|gr|г|л)?\s*$/i, '');
             
             suffixesToRemove.forEach(word => {
@@ -269,7 +270,15 @@
                 }
                 groupsMap.get(mapKey).cards.push(card);
             });
-            return Array.from(groupsMap.values()).sort((a, b) => a.commonName.localeCompare(b.commonName));
+            // Сортировка по имени внутри групп
+            const result = Array.from(groupsMap.values()).sort((a, b) => a.commonName.localeCompare(b.commonName));
+            result.forEach(group => {
+                group.cards.sort((a, b) => {
+                    // Сортируем: сначала основной напиток (короткое имя), потом вариации
+                    return a['название'].length - b['название'].length;
+                });
+            });
+            return result;
         }
 
         function parseCSVRobust(text, delimiter = ',') {
@@ -426,17 +435,18 @@
                     const btn = document.createElement('button');
                     btn.className = 'variation-btn';
                     
+                    // Формируем текст кнопки (убираем общее название)
                     let btnText = card['название'].replace(new RegExp('^' + escapeRegExp(groupObj.commonName), 'i'), '').trim();
                     btnText = btnText.replace(/^[\s\(\)-]+|[\s\)]+$/g, '');
                     
-                    btn.textContent = btnText.length === 0 ? "Классика" : capitalizeWords(btnText);
+                    btn.textContent = btnText.length === 0 ? "Стандарт" : capitalizeWords(btnText);
                     btn.onclick = () => {
                         document.querySelectorAll('.variation-btn').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active'); updateModalContent(card);
                     };
                     variationContainer.appendChild(btn);
+                    if (idx === 0) btn.classList.add('active');
                 });
-                variationContainer.firstChild.classList.add('active');
             } else { variationContainer.classList.add('hidden'); }
             
             updateModalContent(groupObj.cards[0]);
