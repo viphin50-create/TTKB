@@ -193,6 +193,7 @@
             if (!str) return "";
             return str.toLowerCase()
                       .replace(/\u00A0/g, ' ') 
+                      .replace(/[–—−-]/g, ' ') // Все тире и дефисы превращаем в пробелы для индекса
                       .replace(/\s+/g, ' ')    
                       .trim();
         }
@@ -213,18 +214,16 @@
         function getCleanName(name, category) {
             if (!name) return "";
             
-            // Расширенный список слов для удаления, чтобы объединить варианты (Лимонады, Графины и т.д.)
             const suffixesToRemove = [
                 'теплый', 'тёплый', 'холодный', 'горячий', 'warm', 'hot', 'cold', 'ice', 'cool',
                 'без пф', 'с пф', 'б/пф', 'no pf', 'большой', 'средний', 'маленький',
                 'классический', 'классика', 'оригинал',
                 'зерно', 'экстракт', 'grain', 'extract',
                 'пинч', 'с сиропом', 'сироп',
-                'графин', 'carafe', 'pitcher' // Добавлено для группировки лимонадов
+                'графин', 'carafe', 'pitcher'
             ];
             
             let clean = name.toLowerCase().replace(/\(.*\)/g, '').replace(/\[.*\]/g, '');
-            // Удаляем числовые объемы в конце строки (например, " 400 мл")
             clean = clean.replace(/\s+\d+([.,]\d+)?\s*(мл|ml|гр|gr|г|л)?\s*$/i, '');
             
             suffixesToRemove.forEach(word => {
@@ -240,14 +239,24 @@
         function buildLookupMap() {
             ingredientLookupMap.clear();
             groupedCardData.forEach(groupObj => {
-                const commonNorm = normalizeStr(groupObj.commonName);
-                if (commonNorm.length >= 3) {
-                    ingredientLookupMap.set(commonNorm, groupObj);
-                }
-                groupObj.cards.forEach(card => {
-                    const nameNorm = normalizeStr(card['название']);
-                    if (nameNorm.length >= 3) {
-                        ingredientLookupMap.set(nameNorm, groupObj);
+                const nameLower = groupObj.commonName.toLowerCase();
+                // Пропускаем топпинги "т. ..."
+                if (nameLower.startsWith('т.') || nameLower.startsWith('т ')) return;
+
+                const namesToRegister = [groupObj.commonName];
+                groupObj.cards.forEach(c => namesToRegister.push(c['название']));
+
+                // Специальная обработка для Пен
+                if (nameLower.includes('сырная пена')) namesToRegister.push('Сырная');
+                if (nameLower.includes('кокосовая пена')) namesToRegister.push('Кокосовая');
+
+                namesToRegister.forEach(name => {
+                    const norm = normalizeStr(name);
+                    if (norm.length >= 3) {
+                        // Сохраняем связь. Если несколько имен ведут к одной группе - это нормально.
+                        if (!ingredientLookupMap.has(norm)) {
+                            ingredientLookupMap.set(norm, groupObj);
+                        }
                     }
                 });
             });
@@ -270,13 +279,9 @@
                 }
                 groupsMap.get(mapKey).cards.push(card);
             });
-            // Сортировка по имени внутри групп
             const result = Array.from(groupsMap.values()).sort((a, b) => a.commonName.localeCompare(b.commonName));
             result.forEach(group => {
-                group.cards.sort((a, b) => {
-                    // Сортируем: сначала основной напиток (короткое имя), потом вариации
-                    return a['название'].length - b['название'].length;
-                });
+                group.cards.sort((a, b) => a['название'].length - b['название'].length);
             });
             return result;
         }
@@ -359,14 +364,24 @@
                 const newParts = [];
                 for (const part of parts) {
                     if (part.group) { newParts.push(part); continue; }
-                    const regex = new RegExp(`(${escapeRegExp(searchName)})`, 'gi');
+                    
+                    // Разбиваем поисковое имя на слова и создаем паттерн, допускающий тире или пробелы между ними
+                    const words = searchName.split(' ');
+                    const pattern = words.map(w => escapeRegExp(w)).join('[-\\s—–−]+');
+                    const regex = new RegExp(`(${pattern})`, 'gi');
+                    
                     const splitArr = part.text.split(regex);
                     if (splitArr.length > 1) {
                         for (let i = 0; i < splitArr.length; i++) {
                             const chunk = splitArr[i];
                             if (!chunk) continue;
-                            if (normalizeStr(chunk) === searchName) { newParts.push({ text: chunk, group: ingredientLookupMap.get(searchName) }); }
-                            else { newParts.push({ text: chunk, group: null }); }
+                            
+                            // Если чанк совпадает с нормализованным ключом или регуляркой - это ссылка
+                            if (normalizeStr(chunk) === searchName || regex.test(chunk)) { 
+                                newParts.push({ text: chunk, group: ingredientLookupMap.get(searchName) }); 
+                            } else { 
+                                newParts.push({ text: chunk, group: null }); 
+                            }
                         }
                     } else { newParts.push(part); }
                 }
@@ -434,11 +449,8 @@
                 groupObj.cards.forEach((card, idx) => {
                     const btn = document.createElement('button');
                     btn.className = 'variation-btn';
-                    
-                    // Формируем текст кнопки (убираем общее название)
                     let btnText = card['название'].replace(new RegExp('^' + escapeRegExp(groupObj.commonName), 'i'), '').trim();
                     btnText = btnText.replace(/^[\s\(\)-]+|[\s\)]+$/g, '');
-                    
                     btn.textContent = btnText.length === 0 ? "Стандарт" : capitalizeWords(btnText);
                     btn.onclick = () => {
                         document.querySelectorAll('.variation-btn').forEach(b => b.classList.remove('active'));
