@@ -109,13 +109,103 @@
             background-color: #4A90E2; color: white; border-color: #4A90E2;
             box-shadow: 0 2px 5px rgba(74, 144, 226, 0.3);
         }
+        
+        .instruction-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-align: left;
+        }
+        .step-number {
+            background: #4A90E2;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* Test Styles - Updated */
+        .ing-option-btn {
+            background-color: white;
+            border: 2px solid #e5e7eb;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            color: #374151;
+            transition: all 0.2s;
+            text-align: left;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .ing-option-btn:hover {
+            border-color: #9ca3af;
+        }
+        .ing-option-btn.selected {
+            border-color: #4A90E2;
+            background-color: #eff6ff;
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+        }
+        .ing-option-btn.correct-answer {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+        }
+        .ing-option-btn.wrong-answer {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+            opacity: 0.7;
+        }
+
+        .test-input {
+            border: 2px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            width: 70px;
+            text-align: center;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .test-input:focus {
+            border-color: #4A90E2;
+            outline: none;
+        }
+        
+        /* Checkbox animation */
+        .custom-checkbox {
+            width: 20px; height: 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            margin-right: 10px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .ing-option-btn.selected .custom-checkbox {
+            background-color: #4A90E2;
+            border-color: #4A90E2;
+        }
+        .custom-checkbox::after {
+            content: '✓'; color: white; font-size: 12px; display: none;
+        }
+        .ing-option-btn.selected .custom-checkbox::after { display: block; }
+
     </style>
 </head>
 <body class="p-4 sm:p-8">
 
-    <header class="text-center mb-8">
-        <h1 class="text-5xl font-bold text-gray-800 drop-shadow-lg" style="text-shadow: 0 0 10px #FFFFFF;">Технологические Карты Бара</h1>
+    <header class="text-center mb-6 relative">
+        <h1 class="text-5xl font-bold text-gray-800 drop-shadow-lg" style="text-shadow: 0 0 10px #FFFFFF;">ТТК Бара</h1>
         <p class="text-gray-500 mt-2">Интерактивный каталог с переходами между составными частями.</p>
+        
+        <button id="startTestBtn" onclick="startTest()" class="hidden absolute top-0 right-0 sm:right-10 mt-2 sm:mt-0 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-2 px-4 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all text-sm flex items-center gap-2">
+            <span>🎓</span> Начать Тест
+        </button>
     </header>
 
     <div class="flex flex-col sm:flex-row justify-center items-center mb-4 gap-4 max-w-3xl mx-auto">
@@ -136,8 +226,41 @@
         </div>
     </div>
     
+    <!-- Инструкция -->
+    <div id="instructionPanel" class="max-w-4xl mx-auto p-8 metal-effect text-center hidden">
+        <div class="text-6xl mb-6">👋</div>
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">Добро пожаловать в базу знаний!</h2>
+        <p class="text-gray-600 text-lg mb-8">
+            Здесь собраны все технологические карты. Карточки скрыты для удобства.<br>
+            Чтобы найти нужный рецепт, выполните одно из действий:
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-2xl mx-auto">
+            <div class="bg-white/50 p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="text-3xl">📂</span>
+                    <h3 class="font-bold text-gray-800 text-lg">Категории</h3>
+                </div>
+                <p class="text-gray-600">Выберите категорию из выпадающего списка слева, чтобы открыть группу напитков.</p>
+            </div>
+            
+            <div class="bg-white/50 p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="text-3xl">🔍</span>
+                    <h3 class="font-bold text-gray-800 text-lg">Поиск</h3>
+                </div>
+                <p class="text-gray-600">Начните вводить название напитка или ингредиента в поле поиска справа.</p>
+            </div>
+        </div>
+        
+        <p class="text-gray-400 text-sm italic mt-10">
+            Подсказка: Внутри рецептов можно нажимать на подчеркнутые ингредиенты (например, сиропы), чтобы перейти к их приготовлению.
+        </p>
+    </div>
+
     <div id="cardGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl mx-auto"></div>
     
+    <!-- Modal Recipe -->
     <dialog id="recipeModal" class="p-0 rounded-2xl metal-effect w-11/12 max-w-2xl lg:max-w-3xl mx-auto overflow-hidden">
         <div class="p-6 sm:p-8 bg-white/50 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-start mb-2 gap-4">
@@ -169,6 +292,78 @@
         </div>
     </dialog>
 
+    <!-- Modal Test -->
+    <dialog id="testModal" class="p-0 rounded-2xl metal-effect w-11/12 max-w-2xl mx-auto overflow-hidden">
+        <div class="p-6 bg-white/95 max-h-[95vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Барный Экзамен</h2>
+                <button onclick="closeTest()" class="text-gray-500 hover:text-red-500 font-bold text-3xl leading-none">&times;</button>
+            </div>
+            
+            <div id="testStartScreen" class="text-center">
+                <div class="mb-6 space-y-4">
+                    <label class="block text-left text-gray-700 font-semibold mb-2">Выберите категорию для теста:</label>
+                    <select id="testCategorySelect" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none text-lg">
+                        <!-- Options generated dynamically -->
+                    </select>
+                </div>
+                
+                <div class="bg-blue-50 p-4 rounded-xl text-left text-sm text-blue-800 mb-6">
+                    <p class="font-bold mb-1">Правила тестирования:</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Выберите правильные ингредиенты из списка.</li>
+                        <li>Лишние ингредиенты считаются ошибкой.</li>
+                        <li>Указывайте <b>точные</b> граммовки.</li>
+                    </ul>
+                </div>
+
+                <button onclick="initTestRound()" class="w-full bg-blue-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:bg-blue-700 transition-colors text-xl">
+                    Начать экзамен
+                </button>
+            </div>
+
+            <div id="testGameScreen" class="hidden">
+                <div class="flex justify-between items-center mb-4 text-sm text-gray-500 font-semibold">
+                    <span id="testProgress">Вопрос 1/5</span>
+                    <span id="testScore" class="text-green-600 bg-green-100 px-3 py-1 rounded-full">Очки: 0</span>
+                </div>
+                
+                <div class="text-center mb-6">
+                    <h3 id="testQuestionTitle" class="text-2xl font-extrabold text-gray-800 mb-1"></h3>
+                    <p class="text-xs text-gray-400">Выберите состав и укажите граммовки</p>
+                </div>
+                
+                <div id="testIngredientsPool" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    <!-- Buttons will be injected here -->
+                </div>
+                
+                <div id="testFeedback" class="hidden p-3 rounded-lg text-center font-bold mb-4"></div>
+
+                <button id="testSubmitBtn" onclick="checkTestAnswer()" class="w-full bg-green-500 text-white font-bold py-3 rounded-xl shadow hover:bg-green-600 transition-colors mb-2 text-lg">
+                    Проверить
+                </button>
+                <button id="testNextBtn" onclick="nextTestQuestion()" class="w-full bg-blue-500 text-white font-bold py-3 rounded-xl shadow hover:bg-blue-600 transition-colors hidden text-lg">
+                    Следующий
+                </button>
+            </div>
+
+            <div id="testResultScreen" class="hidden text-center py-8">
+                <div class="text-6xl mb-4" id="finalResultEmoji"></div>
+                <h3 class="text-3xl font-bold mb-4" id="finalResultTitle"></h3>
+                <p class="text-lg text-gray-600 mb-8" id="finalResultText"></p>
+                
+                <div class="flex justify-center gap-4">
+                    <button onclick="document.getElementById('testStartScreen').classList.remove('hidden'); document.getElementById('testResultScreen').classList.add('hidden');" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-xl shadow hover:bg-blue-700">
+                        К выбору категории
+                    </button>
+                    <button onclick="closeTest()" class="bg-gray-200 text-gray-700 font-bold py-3 px-8 rounded-xl shadow hover:bg-gray-300">
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
     <script>
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ukbh5K5GdykFFCDj-H0xUODUAneKWmbeJFfe4tLTCMEWKJgCkefhrCOtsKDB_QRRYySAvI1xOTh3/pub?gid=1617440067&single=true&output=csv";
         
@@ -188,10 +383,19 @@
         const modalBackButton = document.getElementById('modalBackButton');
         const itemsCountLabel = document.getElementById('itemsCount');
         const variationContainer = document.getElementById('variationContainer');
+        const instructionPanel = document.getElementById('instructionPanel');
+        const startTestBtn = document.getElementById('startTestBtn');
+        const testModal = document.getElementById('testModal');
+        const testCategorySelect = document.getElementById('testCategorySelect');
+
+        // --- TEST SYSTEM VARIABLES ---
+        let currentTestQuestions = [];
+        let currentQuestionIndex = 0;
+        let testScore = 0;
+        let maxPossibleScore = 0;
 
         function normalizeStr(str) {
             if (!str) return "";
-            // Превращаем все тире и дефисы в пробелы для индексации
             return str.toLowerCase()
                       .replace(/\u00A0/g, ' ') 
                       .replace(/[–—−-]/g, ' ') 
@@ -236,13 +440,9 @@
             ingredientLookupMap.clear();
             groupedCardData.forEach(groupObj => {
                 const nameLower = groupObj.commonName.toLowerCase();
-                // Топпинги не регистрируем как цели для ссылок
                 if (nameLower.startsWith('т.') || nameLower.startsWith('т ')) return;
-
                 const namesToRegister = [groupObj.commonName];
                 groupObj.cards.forEach(c => namesToRegister.push(c['название']));
-
-                // Специальная обработка для Пен
                 if (nameLower.includes('сырная пена')) namesToRegister.push('Сырная');
                 if (nameLower.includes('кокосовая пена')) namesToRegister.push('Кокосовая');
 
@@ -356,7 +556,6 @@
                 for (const part of parts) {
                     if (part.group) { newParts.push(part); continue; }
                     
-                    // Паттерн: слова разделены любым количеством тире, дефисов или пробелов
                     const words = searchName.split(' ');
                     const pattern = words.map(w => escapeRegExp(w)).join('[-\\s—–−]+');
                     const regex = new RegExp(`(${pattern})`, 'gi');
@@ -404,14 +603,11 @@
             ingredients.forEach(item => {
                 const li = document.createElement('li');
                 li.className = "text-gray-700";
-
-                // ЖЕСТКАЯ ПРОВЕРКА: Если строка содержит "т.", отключаем гиперссылки для этой строки
                 if (item.toLowerCase().includes('т.')) {
                     li.textContent = item;
                     ingredientsListEl.appendChild(li);
                     return;
                 }
-
                 const match = item.match(/^([\d.,\s\w]+\s*)?([^:;-]+)([:;-].*)?$/); 
                 if (match) {
                     if (match[1]) li.appendChild(document.createTextNode(match[1]));
@@ -486,6 +682,8 @@
                     if (obj['название']) {
                         obj['название'] = ensureFirstLetterUpper(obj['название']);
                         const smart = parseSmartIngredients(obj['состав'], obj['объём']);
+                        // Save raw ingredients for test
+                        obj['raw_ingredients'] = obj['состав'];
                         obj['состав'] = smart.cleanIngredients;
                         obj['объём'] = (!obj['объём'] || obj['объём'] === '-') ? smart.extractedVolume : obj['объём'];
                         obj['единица'] = smart.extractedUnit;
@@ -496,7 +694,15 @@
                 groupedCardData = groupCards(allCardData);
                 buildLookupMap();
                 populateCategoryFilter(allCardData);
-                renderGrid(groupedCardData);
+                
+                // Populate Test Categories
+                populateTestCategories(allCardData);
+                
+                filterDrinks();
+                
+                // Show test button only if data loaded
+                startTestBtn.classList.remove('hidden');
+                
             } catch (e) {
                 console.error(e); statusIndicator.innerHTML = "Ошибка загрузки данных.";
             } finally { loadingIndicator.classList.add('hidden'); }
@@ -509,10 +715,44 @@
                 const opt = document.createElement('option'); opt.value = c; opt.textContent = c; categoryFilter.appendChild(opt);
             });
         }
+        
+        function populateTestCategories(data) {
+            const categories = new Set(data.map(d => d['категория']));
+            testCategorySelect.innerHTML = '';
+            
+            // Placeholder
+            const placeholder = document.createElement('option');
+            placeholder.textContent = "Выберите категорию...";
+            placeholder.value = "";
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            testCategorySelect.appendChild(placeholder);
+
+            Array.from(categories).sort().forEach(c => {
+                // Filter out PF categories
+                const lower = c.toLowerCase();
+                if (lower.includes('пф') || lower.includes('заготовки') || lower.includes('сироп')) return;
+                
+                const opt = document.createElement('option'); 
+                opt.value = c; 
+                opt.textContent = c; 
+                testCategorySelect.appendChild(opt);
+            });
+        }
 
         function filterDrinks() {
             const query = normalizeStr(searchBar.value);
             const cat = categoryFilter.value;
+
+            if (!query && !cat) {
+                instructionPanel.classList.remove('hidden');
+                cardGrid.innerHTML = ''; 
+                statusIndicator.innerHTML = '';
+                itemsCountLabel.textContent = 'Ожидание выбора...';
+                return;
+            }
+
+            instructionPanel.classList.add('hidden');
             const filtered = groupedCardData.filter(g => g.cards.some(c => 
                 (normalizeStr(c['название']).includes(query) || normalizeStr(g.commonName).includes(query)) && 
                 (!cat || c['категория'] === cat)
@@ -529,6 +769,342 @@
                 let s = l.trim(); if (!s) return null;
                 return s.replace(/^(\d+)\.([^\s])/u, '$1. $2').replace(/^(\d)([а-яА-Яa-zA-Z])/u, '$1. $2');
             }).filter(l => l).join('\n');
+        }
+
+        // --- NEW TEST SYSTEM LOGIC ---
+
+        function startTest() {
+            document.getElementById('testStartScreen').classList.remove('hidden');
+            document.getElementById('testGameScreen').classList.add('hidden');
+            document.getElementById('testResultScreen').classList.add('hidden');
+            testModal.showModal();
+        }
+
+        function closeTest() {
+            testModal.close();
+        }
+        
+        // Helper to strip "1ПФ ", "2 ", etc. from names
+        function cleanIngredientNameForTest(name) {
+             // 1. Remove "4 т.", "1ПФ", digits, etc at the start
+             let cleaned = name.replace(/^[\d.]+\s*(?:т\.|т\s|ПФ|пф|PF|pf)?\s*/i, '').trim();
+
+             // 2. Simplify Foams: "Сырная пена" -> "Пена"
+             if (/^(Сырная|Кокосовая)\s+пена$/i.test(cleaned)) {
+                 return "Пена";
+             }
+
+             return cleaned;
+        }
+
+        // Parse ingredients specifically for test (looking for numbers)
+        function parseIngredientsForTest(rawString) {
+            let clean = rawString.replace(/(?:Объем|Объём|Вес).*?(\d+(?:[.,]\d+)?).*$/gmi, '');
+            let items = clean.split(/[\n;]+/).filter(s => s.trim().length > 0);
+            
+            let results = [];
+            
+            items.forEach(item => {
+                item = item.trim();
+                // Check for amount
+                const match = item.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(мл|гр|г|л|ml|gr|g|l)?\.?$/i);
+                
+                let entry = {};
+                
+                if (match) {
+                    entry = {
+                        name: cleanIngredientNameForTest(match[1].trim()),
+                        amount: parseFloat(match[2].replace(',', '.')),
+                        unit: match[3] || '',
+                        isTestable: true,
+                        rawName: match[1].trim() // Keep raw for modifier check
+                    };
+                } else {
+                    entry = {
+                        name: cleanIngredientNameForTest(item),
+                        amount: 0,
+                        unit: '',
+                        isTestable: false,
+                        rawName: item
+                    };
+                }
+
+                // LOGIC TO MERGE "Альтернативное (модификатор)"
+                const lowerRaw = entry.rawName.toLowerCase();
+                if (lowerRaw.includes('альтернативное') || lowerRaw.includes('модификатор')) {
+                    // This is a modifier line. 
+                    // If we have a previous item, this line likely contains the amount for it.
+                    if (results.length > 0) {
+                        let prev = results[results.length - 1];
+                        
+                        // If this modifier line has an amount (e.g. "Альтернативное... 100"),
+                        // we assign it to the previous item (e.g. "Milk")
+                        if (entry.amount > 0) {
+                             prev.amount = entry.amount;
+                             prev.unit = entry.unit;
+                             prev.isTestable = true;
+                        }
+                    }
+                    // IMPORTANT: We do NOT add the modifier line itself to the test list.
+                    return; 
+                }
+
+                results.push(entry);
+            });
+            
+            return results.filter(r => r.name.length > 1);
+        }
+        
+        // Get random distractors (ingredients that are NOT in the current list)
+        function getDistractors(currentIngredients, count = 3) {
+            // Collect all unique clean ingredient names from the whole DB
+            // (In a real app, cache this. Here we calculate on fly)
+            const allNames = new Set();
+            allCardData.forEach(card => {
+                const parsed = parseIngredientsForTest(card['raw_ingredients'] || "");
+                parsed.forEach(p => {
+                    if (p.name.length > 2) allNames.add(p.name);
+                });
+            });
+            
+            const currentNames = new Set(currentIngredients.map(i => i.name.toLowerCase()));
+            const dist = [];
+            const allNamesArr = Array.from(allNames);
+            
+            let attempts = 0;
+            while (dist.length < count && attempts < 100) {
+                const r = allNamesArr[Math.floor(Math.random() * allNamesArr.length)];
+                if (!currentNames.has(r.toLowerCase()) && !dist.includes(r)) {
+                    dist.push(r);
+                }
+                attempts++;
+            }
+            return dist;
+        }
+
+        function initTestRound() {
+            const cat = testCategorySelect.value;
+            
+            if (!cat) {
+                alert("Пожалуйста, выберите категорию для начала теста.");
+                return;
+            }
+            
+            let availableCards = allCardData.filter(c => c['raw_ingredients'] && c['raw_ingredients'].length > 5);
+            
+            // Filter by Category
+            availableCards = availableCards.filter(c => c['категория'] === cat);
+            
+            if (availableCards.length === 0) {
+                alert("В этой категории нет подходящих карточек для теста.");
+                return;
+            }
+            
+            // Shuffle and pick 5
+            availableCards.sort(() => Math.random() - 0.5);
+            
+            currentTestQuestions = availableCards.slice(0, 5).map(card => {
+                const correctIngredients = parseIngredientsForTest(card['raw_ingredients']);
+                const distractors = getDistractors(correctIngredients, 4); // 4 wrong options
+                
+                // Combine correct + distractors for the UI pool
+                let pool = correctIngredients.map(i => ({...i, type: 'correct'}));
+                distractors.forEach(d => {
+                    pool.push({ name: d, amount: 0, unit: '', isTestable: false, type: 'wrong' });
+                });
+                
+                // Shuffle pool
+                pool.sort(() => Math.random() - 0.5);
+                
+                return {
+                    name: card['название'],
+                    correct: correctIngredients,
+                    pool: pool
+                };
+            });
+
+            currentQuestionIndex = 0;
+            testScore = 0;
+            maxPossibleScore = 0;
+            
+            document.getElementById('testStartScreen').classList.add('hidden');
+            document.getElementById('testResultScreen').classList.add('hidden');
+            document.getElementById('testGameScreen').classList.remove('hidden');
+            
+            showTestQuestion();
+        }
+
+        function showTestQuestion() {
+            const q = currentTestQuestions[currentQuestionIndex];
+            document.getElementById('testQuestionTitle').textContent = q.name;
+            document.getElementById('testProgress').textContent = `Вопрос ${currentQuestionIndex + 1}/${currentTestQuestions.length}`;
+            document.getElementById('testScore').textContent = `Очки: ${testScore}`;
+            document.getElementById('testFeedback').className = "hidden";
+            
+            const poolContainer = document.getElementById('testIngredientsPool');
+            poolContainer.innerHTML = '';
+
+            // Render buttons for construction
+            q.pool.forEach((ing, idx) => {
+                const btn = document.createElement('div');
+                btn.className = "ing-option-btn cursor-pointer select-none";
+                btn.onclick = (e) => toggleIngredient(e.currentTarget);
+                
+                // Store data
+                btn.dataset.name = ing.name;
+                btn.dataset.type = ing.type; 
+                btn.dataset.correctAmount = ing.amount || 0;
+                
+                let html = `
+                    <div class="flex items-center flex-grow">
+                        <div class="custom-checkbox"></div>
+                        <span>${ing.name}</span>
+                    </div>
+                `;
+                
+                // Input container (hidden by default via CSS logic or just JS toggle)
+                // We will only show input if selected
+                html += `
+                    <div class="input-area hidden ml-2">
+                        <input type="number" class="test-input" placeholder="0" onclick="event.stopPropagation()">
+                        <span class="text-xs text-gray-500 ml-1">${ing.unit || ''}</span>
+                    </div>
+                `;
+                
+                btn.innerHTML = html;
+                poolContainer.appendChild(btn);
+            });
+
+            document.getElementById('testSubmitBtn').classList.remove('hidden');
+            document.getElementById('testNextBtn').classList.add('hidden');
+        }
+        
+        function toggleIngredient(el) {
+            // Prevent toggling if already submitted (class disabled?)
+            if (el.classList.contains('cursor-default')) return;
+            
+            el.classList.toggle('selected');
+            const inputArea = el.querySelector('.input-area');
+            if (el.classList.contains('selected')) {
+                inputArea.classList.remove('hidden');
+                // Focus input
+                setTimeout(() => {
+                    const inp = inputArea.querySelector('input');
+                    if(inp) inp.focus();
+                }, 50);
+            } else {
+                inputArea.classList.add('hidden');
+            }
+        }
+
+        function checkTestAnswer() {
+            const options = document.querySelectorAll('.ing-option-btn');
+            let roundScore = 0;
+            let mistakes = 0;
+            
+            options.forEach(el => {
+                // Disable interaction
+                el.classList.remove('cursor-pointer', 'select-none');
+                el.classList.add('cursor-default');
+                el.onclick = null;
+                const input = el.querySelector('input');
+                if (input) input.disabled = true;
+
+                const isSelected = el.classList.contains('selected');
+                const type = el.dataset.type;
+                const correctAmount = parseFloat(el.dataset.correctAmount);
+                const userAmount = input ? parseFloat(input.value) : 0;
+                
+                // LOGIC
+                if (type === 'correct') {
+                    if (isSelected) {
+                        // Correct item selected. Check Amount.
+                        // STRICT MODE: EXACT MATCH
+                        if (userAmount === correctAmount) {
+                            el.classList.add('correct-answer');
+                            roundScore++;
+                        } else {
+                            // Selected correct item but wrong amount
+                            el.classList.add('wrong-answer');
+                            mistakes++;
+                            // Show correct amount
+                            const note = document.createElement('div');
+                            note.className = "text-xs text-red-600 font-bold absolute right-2 top-0";
+                            note.innerText = `Надо: ${correctAmount}`;
+                            el.appendChild(note);
+                        }
+                    } else {
+                        // Correct item missed
+                        el.style.border = "2px dashed #f87171"; // Highlight missed
+                        mistakes++;
+                    }
+                } else {
+                    // Wrong item
+                    if (isSelected) {
+                        el.classList.add('wrong-answer');
+                        mistakes++;
+                    }
+                }
+            });
+
+            if (mistakes === 0 && roundScore > 0) {
+                const feedback = document.getElementById('testFeedback');
+                feedback.textContent = "Идеально! 🔥";
+                feedback.className = "block p-3 rounded-lg text-center font-bold mb-4 bg-green-100 text-green-700";
+                testScore += 10; // Bonus for perfect round
+            } else {
+                 // penalty logic? Just count score as is? Let's just add strict points.
+            }
+            
+            // Increment raw score (1pt per correct ingredient/amount pair)
+            testScore += roundScore;
+            
+            document.getElementById('testScore').textContent = `Очки: ${testScore}`;
+            
+            document.getElementById('testSubmitBtn').classList.add('hidden');
+            document.getElementById('testNextBtn').classList.remove('hidden');
+            
+            if (currentQuestionIndex === currentTestQuestions.length - 1) {
+                document.getElementById('testNextBtn').textContent = "Завершить";
+            } else {
+                document.getElementById('testNextBtn').textContent = "Следующий";
+            }
+        }
+
+        function nextTestQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentTestQuestions.length) {
+                showTestQuestion();
+            } else {
+                showResultScreen();
+            }
+        }
+
+        function showResultScreen() {
+            document.getElementById('testGameScreen').classList.add('hidden');
+            document.getElementById('testResultScreen').classList.remove('hidden');
+            
+            const title = document.getElementById('finalResultTitle');
+            const text = document.getElementById('finalResultText');
+            const emoji = document.getElementById('finalResultEmoji');
+            
+            // Logic for feedback
+            if (testScore >= 40) { // Rough max
+                emoji.textContent = "🐲";
+                title.textContent = "Бог Бара!";
+                title.className = "text-3xl font-bold mb-4 text-green-600";
+                text.textContent = `Счет: ${testScore}. Вы знаете меню на экспертном уровне.`;
+            } else if (testScore >= 20) {
+                emoji.textContent = "🐥";
+                title.textContent = "Хороший результат";
+                title.className = "text-3xl font-bold mb-4 text-blue-600";
+                text.textContent = `Счет: ${testScore}. Знания есть, но рекомендуем закрепить материал.`;
+            } else {
+                emoji.textContent = "📚"; // Neutral book
+                title.textContent = "Требуется повторение";
+                title.className = "text-3xl font-bold mb-4 text-red-600";
+                text.textContent = `Счет: ${testScore}. Рекомендуем освежить знания техкарт и пройти тест заново.`;
+            }
         }
     </script>
 </body>
