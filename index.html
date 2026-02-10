@@ -313,7 +313,8 @@
                     <ul class="list-disc list-inside space-y-1">
                         <li>Выберите правильные ингредиенты из списка.</li>
                         <li>Лишние ингредиенты считаются ошибкой.</li>
-                        <li>Указывайте <b>точные</b> граммовки.</li>
+                        <li>Для жидких/сыпучих ингредиентов введите цифру.</li>
+                        <li>Для штучных (слайсы, капли, веточки) просто выберите пункт.</li>
                     </ul>
                 </div>
 
@@ -783,18 +784,31 @@
         function closeTest() {
             testModal.close();
         }
-        
-        // Helper to strip "1ПФ ", "2 ", etc. from names
-        function cleanIngredientNameForTest(name) {
-             // 1. Remove "4 т.", "1ПФ", digits, etc at the start
-             let cleaned = name.replace(/^[\d.]+\s*(?:т\.|т\s|ПФ|пф|PF|pf)?\s*/i, '').trim();
 
-             // 2. Simplify Foams: "Сырная пена" -> "Пена"
+        function isFixedUnit(unit) {
+            if (!unit) return false;
+            const fixedUnits = ['шт', 'капли', 'кап', 'слайс', 'слайса', 'слайсы', 'долька', 'долек', 'веточка', 'вет', 'лист'];
+            return fixedUnits.some(u => unit.toLowerCase().startsWith(u));
+        }
+
+        // Cleans prefixes like "1.", "т."
+        function cleanPrefixes(name) {
+             let cleaned = name.replace(/^[\d]+\.?\s*/, '').trim();
+             cleaned = cleaned.replace(/^т\.\s*/i, '');
+             cleaned = cleaned.replace(/^(ПФ|PF)(?=[^\s])/i, '$1 ');
              if (/^(Сырная|Кокосовая)\s+пена$/i.test(cleaned)) {
                  return "Пена";
              }
-
              return cleaned;
+        }
+
+        // Aggressively cleans amounts/units from end of string
+        function cleanSuffixes(name) {
+             const garbagePattern = /(?:\s+(?:(?:\d+(?:[.,]\d+)?)|(?:мл|гр|г|кг|л|шт|капли|кап|слайс[а-я]*|долько|долек|gr|ml|g|kg|l)\.?))+$/i;
+             return name.replace(garbagePattern, (match) => {
+                 if (match.includes('%')) return match; 
+                 return ''; 
+             }).trim();
         }
 
         // Parse ingredients specifically for test (looking for numbers)
@@ -806,46 +820,61 @@
             
             items.forEach(item => {
                 item = item.trim();
-                // Check for amount
-                const match = item.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(мл|гр|г|л|ml|gr|g|l)?\.?$/i);
                 
-                let entry = {};
+                // Get basic name first to handle messy prefixes
+                const prefixCleaned = cleanPrefixes(item);
+
+                let amount = 0;
+                let unit = '';
                 
-                if (match) {
-                    entry = {
-                        name: cleanIngredientNameForTest(match[1].trim()),
-                        amount: parseFloat(match[2].replace(',', '.')),
-                        unit: match[3] || '',
-                        isTestable: true,
-                        rawName: match[1].trim() // Keep raw for modifier check
-                    };
-                } else {
-                    entry = {
-                        name: cleanIngredientNameForTest(item),
-                        amount: 0,
-                        unit: '',
-                        isTestable: false,
-                        rawName: item
-                    };
+                const amountMatch = item.match(/(\d+(?:[.,]\d+)?)\s*(мл|гр|г|л|ml|gr|g|l|шт|кг|капли|кап|слайс[а-я]*|веточка[а-я]*|вет|лист[а-я]*)?\.?(?![%\d])/i);
+                
+                if (amountMatch) {
+                    amount = parseFloat(amountMatch[1].replace(',', '.'));
+                    unit = amountMatch[2] || '';
                 }
+
+                let finalName = "";
+                let requireInput = true;
+
+                if (isFixedUnit(unit)) {
+                    // CASE A: Fixed Unit -> Use full name (e.g. "Мята 1 веточка"), No Input
+                    finalName = prefixCleaned;
+                    requireInput = false;
+                } else {
+                    // CASE B: Standard Unit -> Strip numbers (e.g. "Молоко"), Input Required
+                    finalName = cleanSuffixes(prefixCleaned);
+                    requireInput = true;
+                }
+
+                let entry = {
+                    name: finalName,
+                    amount: amount,
+                    unit: unit,
+                    requireInput: requireInput,
+                    isTestable: amount > 0, // General validity flag
+                    rawName: item
+                };
 
                 // LOGIC TO MERGE "Альтернативное (модификатор)"
                 const lowerRaw = entry.rawName.toLowerCase();
                 if (lowerRaw.includes('альтернативное') || lowerRaw.includes('модификатор')) {
-                    // This is a modifier line. 
-                    // If we have a previous item, this line likely contains the amount for it.
                     if (results.length > 0) {
                         let prev = results[results.length - 1];
-                        
-                        // If this modifier line has an amount (e.g. "Альтернативное... 100"),
-                        // we assign it to the previous item (e.g. "Milk")
                         if (entry.amount > 0) {
                              prev.amount = entry.amount;
                              prev.unit = entry.unit;
+                             // Inherit input requirement from the new unit logic
+                             if (isFixedUnit(entry.unit)) {
+                                 prev.requireInput = false;
+                                 // Update name to include the modifier amount? 
+                                 // Usually modifiers are ml/gr, so they stay input=true.
+                             } else {
+                                 prev.requireInput = true;
+                             }
                              prev.isTestable = true;
                         }
                     }
-                    // IMPORTANT: We do NOT add the modifier line itself to the test list.
                     return; 
                 }
 
@@ -857,8 +886,6 @@
         
         // Get random distractors (ingredients that are NOT in the current list)
         function getDistractors(currentIngredients, count = 3) {
-            // Collect all unique clean ingredient names from the whole DB
-            // (In a real app, cache this. Here we calculate on fly)
             const allNames = new Set();
             allCardData.forEach(card => {
                 const parsed = parseIngredientsForTest(card['raw_ingredients'] || "");
@@ -910,7 +937,7 @@
                 // Combine correct + distractors for the UI pool
                 let pool = correctIngredients.map(i => ({...i, type: 'correct'}));
                 distractors.forEach(d => {
-                    pool.push({ name: d, amount: 0, unit: '', isTestable: false, type: 'wrong' });
+                    pool.push({ name: d, amount: 0, unit: '', requireInput: false, isTestable: false, type: 'wrong' });
                 });
                 
                 // Shuffle pool
@@ -954,6 +981,7 @@
                 btn.dataset.name = ing.name;
                 btn.dataset.type = ing.type; 
                 btn.dataset.correctAmount = ing.amount || 0;
+                btn.dataset.requireInput = ing.requireInput;
                 
                 let html = `
                     <div class="flex items-center flex-grow">
@@ -962,14 +990,14 @@
                     </div>
                 `;
                 
-                // Input container (hidden by default via CSS logic or just JS toggle)
-                // We will only show input if selected
-                html += `
-                    <div class="input-area hidden ml-2">
-                        <input type="number" class="test-input" placeholder="0" onclick="event.stopPropagation()">
-                        <span class="text-xs text-gray-500 ml-1">${ing.unit || ''}</span>
-                    </div>
-                `;
+                // Only show input if requireInput is true
+                if (ing.requireInput) {
+                    html += `
+                        <div class="input-area hidden ml-2">
+                            <input type="number" class="test-input" placeholder="0" onclick="event.stopPropagation()">
+                        </div>
+                    `;
+                }
                 
                 btn.innerHTML = html;
                 poolContainer.appendChild(btn);
@@ -985,15 +1013,19 @@
             
             el.classList.toggle('selected');
             const inputArea = el.querySelector('.input-area');
-            if (el.classList.contains('selected')) {
-                inputArea.classList.remove('hidden');
-                // Focus input
-                setTimeout(() => {
-                    const inp = inputArea.querySelector('input');
-                    if(inp) inp.focus();
-                }, 50);
-            } else {
-                inputArea.classList.add('hidden');
+            
+            // Only try to toggle input if it exists
+            if (inputArea) {
+                if (el.classList.contains('selected')) {
+                    inputArea.classList.remove('hidden');
+                    // Focus input
+                    setTimeout(() => {
+                        const inp = inputArea.querySelector('input');
+                        if(inp) inp.focus();
+                    }, 50);
+                } else {
+                    inputArea.classList.add('hidden');
+                }
             }
         }
 
@@ -1012,26 +1044,30 @@
 
                 const isSelected = el.classList.contains('selected');
                 const type = el.dataset.type;
+                const requireInput = el.dataset.requireInput === 'true';
                 const correctAmount = parseFloat(el.dataset.correctAmount);
                 const userAmount = input ? parseFloat(input.value) : 0;
                 
                 // LOGIC
                 if (type === 'correct') {
                     if (isSelected) {
-                        // Correct item selected. Check Amount.
-                        // STRICT MODE: EXACT MATCH
-                        if (userAmount === correctAmount) {
+                        if (requireInput) {
+                             // STRICT MODE CHECK FOR INPUTS
+                            if (userAmount === correctAmount) {
+                                el.classList.add('correct-answer');
+                                roundScore++;
+                            } else {
+                                el.classList.add('wrong-answer');
+                                mistakes++;
+                                const note = document.createElement('div');
+                                note.className = "text-xs text-red-600 font-bold absolute right-2 top-0";
+                                note.innerText = `Надо: ${correctAmount}`;
+                                el.appendChild(note);
+                            }
+                        } else {
+                            // FIXED UNIT CHECK (No input needed, just selection)
                             el.classList.add('correct-answer');
                             roundScore++;
-                        } else {
-                            // Selected correct item but wrong amount
-                            el.classList.add('wrong-answer');
-                            mistakes++;
-                            // Show correct amount
-                            const note = document.createElement('div');
-                            note.className = "text-xs text-red-600 font-bold absolute right-2 top-0";
-                            note.innerText = `Надо: ${correctAmount}`;
-                            el.appendChild(note);
                         }
                     } else {
                         // Correct item missed
