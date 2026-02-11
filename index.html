@@ -754,10 +754,18 @@
             }
 
             instructionPanel.classList.add('hidden');
-            const filtered = groupedCardData.filter(g => g.cards.some(c => 
-                (normalizeStr(c['название']).includes(query) || normalizeStr(g.commonName).includes(query)) && 
-                (!cat || c['категория'] === cat)
-            ));
+            
+            // SEARCH LOGIC UPDATED HERE
+            const filtered = groupedCardData.filter(g => g.cards.some(c => {
+                const nameMatches = (normalizeStr(c['название']).includes(query) || normalizeStr(g.commonName).includes(query));
+                
+                // If query exists, search everywhere (ignore category filter)
+                if (query) return nameMatches;
+                
+                // If no query, respect category filter
+                return (!cat || c['категория'] === cat);
+            }));
+            
             renderGrid(filtered);
         }
 
