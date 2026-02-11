@@ -730,9 +730,9 @@
             testCategorySelect.appendChild(placeholder);
 
             Array.from(categories).sort().forEach(c => {
-                // Filter out PF categories
+                // Filter out PF categories and Coffee
                 const lower = c.toLowerCase();
-                if (lower.includes('пф') || lower.includes('заготовки') || lower.includes('сироп')) return;
+                if (lower.includes('пф') || lower.includes('заготовки') || lower.includes('сироп') || lower.includes('кофе')) return;
                 
                 const opt = document.createElement('option'); 
                 opt.value = c; 
@@ -793,9 +793,25 @@
 
         // Cleans prefixes like "1.", "т."
         function cleanPrefixes(name) {
-             let cleaned = name.replace(/^[\d]+\.?\s*/, '').trim();
+             // 1. Remove explicit list formats: "1.", "1)", "1-"
+             let cleaned = name.replace(/^\d+[\.\)\-]\s*/, '').trim();
+
+             // 2. Smart removal of start digits
+             // FIX: Теперь мы проверяем границы слова. 
+             // "л" (литр) НЕ совпадет с началом слова "Лёд", потому что после "Л" идет "ё", а не пробел.
+             const protectedUnits = "мл|гр|г|л|ml|gr|g|l|kg|кг|шт|капли|кап|слайс|вет|лист|oz|cl|ст|чл";
+             
+             // Regex: Цифра+Пробел... НО только если дальше НЕ идет (Единица + ГраницаСлова)
+             const startNumRegex = new RegExp(`^(\\d+)\\s+(?!(?:${protectedUnits})(?:\\s|$|\\.|,))`, 'i');
+             
+             const match = cleaned.match(startNumRegex);
+             if (match) {
+                 cleaned = cleaned.substring(match[0].length).trim();
+             }
+
              cleaned = cleaned.replace(/^т\.\s*/i, '');
              cleaned = cleaned.replace(/^(ПФ|PF)(?=[^\s])/i, '$1 ');
+             
              if (/^(Сырная|Кокосовая)\s+пена$/i.test(cleaned)) {
                  return "Пена";
              }
@@ -827,11 +843,15 @@
                 let amount = 0;
                 let unit = '';
                 
-                const amountMatch = item.match(/(\d+(?:[.,]\d+)?)\s*(мл|гр|г|л|ml|gr|g|l|шт|кг|капли|кап|слайс[а-я]*|веточка[а-я]*|вет|лист[а-я]*)?\.?(?![%\d])/i);
+                // 1. Extract Unit (FIX: Added word boundaries so "Л" inside "Лёд" doesn't match "л" unit)
+                const unitRegex = new RegExp(`(?:^|\\s|\\d)(мл|гр|г|л|ml|gr|g|l|кг|kg|шт|капли|кап|слайс[а-я]*|веточка[а-я]*|вет|лист[а-я]*|oz|cl)(?:$|\\s|\\.|,)`, 'i');
+                const unitMatch = prefixCleaned.match(unitRegex);
+                if (unitMatch) unit = unitMatch[1];
                 
+                // 2. Extract Amount (any number)
+                const amountMatch = prefixCleaned.match(/(\d+(?:[.,]\d+)?)(?![%\d])/);
                 if (amountMatch) {
-                    amount = parseFloat(amountMatch[1].replace(',', '.'));
-                    unit = amountMatch[2] || '';
+                     amount = parseFloat(amountMatch[1].replace(',', '.'));
                 }
 
                 let finalName = "";
@@ -887,10 +907,17 @@
         // Get random distractors (ingredients that are NOT in the current list)
         function getDistractors(currentIngredients, count = 3) {
             const allNames = new Set();
+            // CHANGE: Added explicit blocklist for incomplete names/adjectives
+            const bannedNames = new Set(['сырная', 'кокосовая', 'пф', 'pf', 'сироп', 'пюре', 'вода', 'лед', 'лёд', 'сахар', 'украшение']);
+
             allCardData.forEach(card => {
                 const parsed = parseIngredientsForTest(card['raw_ingredients'] || "");
                 parsed.forEach(p => {
-                    if (p.name.length > 2) allNames.add(p.name);
+                    const lower = p.name.toLowerCase();
+                    // Filter garbage: ignore short names and explicitly banned words
+                    if (p.name.length > 2 && !bannedNames.has(lower)) {
+                        allNames.add(p.name);
+                    }
                 });
             });
             
@@ -901,7 +928,25 @@
             let attempts = 0;
             while (dist.length < count && attempts < 100) {
                 const r = allNamesArr[Math.floor(Math.random() * allNamesArr.length)];
-                if (!currentNames.has(r.toLowerCase()) && !dist.includes(r)) {
+                const rLower = r.toLowerCase();
+                
+                // Check if distractor is already a correct ingredient
+                let isConflict = currentNames.has(rLower) || dist.includes(r);
+                
+                // CHANGE: Intelligent conflict check
+                // If correct answer is "ПФ Пена Сырная", don't show "Сырная" or "Пена" as wrong answers.
+                // This prevents confusion between full names and their parts.
+                if (!isConflict) {
+                    for (const correct of currentNames) {
+                        // Check if one contains the other (e.g. "Сырная" inside "ПФ Пена Сырная")
+                        if (correct.includes(rLower) || rLower.includes(correct)) {
+                            isConflict = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!isConflict) {
                     dist.push(r);
                 }
                 attempts++;
